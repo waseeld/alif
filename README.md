@@ -1,5 +1,17 @@
 The Alif Arabic Programming Language - لغة البرمجة العربية ألف
 ---------
+project status | حالة المشروع
+
+[![GitHub issues](https://img.shields.io/github/issues/hassandraga/alif.svg)](https://github.com/hassandraga/alif/issues)
+[![GitHub forks](https://img.shields.io/github/forks/hassandraga/alif.svg)](https://github.com/hassandraga/alif/network)
+[![GitHub stars](https://img.shields.io/github/stars/hassandraga/alif.svg)](https://github.com/hassandraga/alif/stargazers)
+
+
+[![Conda](https://img.shields.io/conda/pn/conda-forge/python.svg)](https://github.com/hassandraga/alif)
+
+
+---------
+
 
 Official website : [www.aliflang.org](https://www.aliflang.org)
 
@@ -83,6 +95,7 @@ $ alif foo.alif bar.app log.txt
 
 Licence
 -------
+[![GitHub license](https://img.shields.io/github/license/hassandraga/alif.svg)](https://github.com/hassandraga/alif/blob/master/licence.txt)
 
 [wxWidgets licence](https://github.com/wxWidgets/wxWidgets/blob/master/docs/licence.txt)
 is a modified version of LGPL explicitly allowing not distributing the sources
