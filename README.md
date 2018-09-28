@@ -97,6 +97,4 @@ Licence
 -------
 [![GitHub license](https://img.shields.io/github/license/hassandraga/alif.svg)](https://github.com/hassandraga/alif/blob/master/licence.txt)
 
-[wxWidgets licence](https://github.com/wxWidgets/wxWidgets/blob/master/docs/licence.txt)
-is a modified version of LGPL explicitly allowing not distributing the sources
-of an application using the library even in the case of static linking.
+GNU GPLv3.
