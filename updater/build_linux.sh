@@ -5,7 +5,7 @@
 # mUpdate
 # Linux 64
 # www.aliflang.org
-# License : wxWindows Library Licence, Version 3.1
+# License : GPLv3
 # ========================
 
 rm -f "bin/linux_mupdate"

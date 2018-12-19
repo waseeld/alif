@@ -5,7 +5,7 @@
 # mUpdate
 # Mac OS X
 # www.aliflang.org
-# License : wxWindows Library Licence, Version 3.1
+# License : GPLv3
 # ========================
 
 rm -f "/Library/Application Support/Aliflang/Alif_Studio/mupdate"

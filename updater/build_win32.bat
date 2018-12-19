@@ -3,7 +3,7 @@ REM # (C)2018 Hassan DRAGA
 REM # mUpdate
 REM # Win32
 REM # www.aliflang.org
-REM # License : wxWindows Library Licence, Version 3.1
+REM # License : GPLv3
 REM # ========================
 
 Set PATH=C:\Alif\bin
