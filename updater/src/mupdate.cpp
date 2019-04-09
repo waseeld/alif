@@ -2,7 +2,7 @@
 // (C)2018 Hassan DRAGA
 // mUpdate
 // www.aliflang.org
-// License : wxWindows Library Licence, Version 3.1
+// License : GPLv3
 // ========================
 
 #if  __APPLE__

@@ -64,7 +64,6 @@ if exist "bin\alifstudio.exe" (
 				
 		) else (
 		
-			echo.
 			echo Striping...
 			echo.
 
@@ -74,10 +73,6 @@ if exist "bin\alifstudio.exe" (
 			echo.
 			
 			pause
-
-			del *.o
-			del *.res
-			del *.d
 		)
 	)
 )
