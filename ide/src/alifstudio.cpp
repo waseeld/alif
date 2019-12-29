@@ -1,11 +1,31 @@
-// ==============================
-//  Alif Studio
-// (C)2018 DRAGA Hassan.
-// www.aliflang.org
-// ------------------------------
-// The Alif Arabic Programming Language
-// ------------------------------
-// ==============================
+/* 
+* - - - - - - - - - - - - - - - - - - - - -
+* The Alif Arabic Programming Language
+* 
+* Alif Studio 2 (IDE)
+* (C)2018-2020 Hassan DRAGA.
+* www.aliflang.org
+* - - - - - - - - - - - - - - - - - - - - -
+*/
+
+/*
+- This file is part of the Alif Studio 2 project (https://github.com/hassandraga/alif).
+- Copyright (C) 2018-2020 Hassan DRAGA.
+-  
+- This program is free software: you can redistribute it and/or modify  
+- it under the terms of the GNU General Public License as published by  
+- the Free Software Foundation, version 3.
+- 
+- This program is distributed in the hope that it will be useful, but 
+- WITHOUT ANY WARRANTY; without even the implied warranty of 
+- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+- General Public License for more details.
+- 
+- You should have received a copy of the GNU General Public License 
+- along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+// ------------------------------------------------
 
 #define UNICODE
 #define _UNICODE
@@ -14,8 +34,13 @@
 
 #if  __APPLE__
 
-	#define _WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ // Fix : /include/wx/wxcrt.h:576:14: error: call to 'wcsstr' is ambiguous
-	#define ALIF_STUDIO_NO_STC // Use wxTextCtrl instead of wxStyledTextCtrl
+	// Fix: /include/wx/wxcrt.h:576:14: 
+	//		error: call to 'wcsstr' is ambiguous
+	#define _WCHAR_H_CPLUSPLUS_98_CONFORMANCE_
+	// Fix: macOS STC low support, 
+	//		using wxTextCtrl instead of wxStyledTextCtrl
+	// 		waiting for next macOS version of STC lib
+	#define AlifStudio_DisableSTC
 
 #endif
 
@@ -23,13 +48,15 @@
 // C++ Include
 // ------------------------------------------------
 
-#include <sstream> // ASSCI, Write batch file
-#include <fstream> // ASSCI, Write batch file
+#include <sstream>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include <ctime>
+
+using namespace std;
 
 #include <utf8.h>
 
@@ -44,39 +71,31 @@
 #endif
 
 #include <wx/aui/aui.h>
-//#include <wx/string.h> // maybe not needed.
 #include <wx/event.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/textctrl.h>
-//#include <wx/textentry.h> // class for txt ctrl, maybe not needed
-//#include <wx/textcompleter.h> // Auto Complete
 #include <wx/splitter.h>
 #include <wx/toolbar.h>
-#include <wx/artprov.h> //Get Default Icon from System for Toolbar
+#include <wx/artprov.h>
 #include <wx/busyinfo.h>
-#include <wx/wfstream.h> // Unicode, Read file line by line.
-#include <wx/txtstrm.h> // Unicode, Read file line by line.
+#include <wx/wfstream.h>
+#include <wx/txtstrm.h>
 #include <wx/textfile.h>
-#include <wx/dirctrl.h> // wxGenericDirCtrl
-#include <wx/treectrl.h> // wxTreeCtrl
+#include <wx/treectrl.h>
 #include <wx/dir.h>
 #include <wx/dialog.h>
 #include <wx/utils.h>
-//#include <wx/tokenzr.h>
 #include <wx/propgrid/propgrid.h>
-#include <wx/splash.h> // Splash Alif Studio Logo
+#include <wx/splash.h>
 #include <wx/utils.h>
-#include <wx/textdlg.h> // Get Text from user, to search
-#include <wx/fontdlg.h> // Font Dialog
-#include <wx/stdpaths.h>	// Get Path
-#include <wx/filename.h>	// Path tools
-
-#include <wx/msgdlg.h> // About Dialog
-#include <wx/aboutdlg.h> // About Dialog
-
-// IMG
-//#include "img.h" // PNG to Byte Array
+#include <wx/textdlg.h>
+#include <wx/fontdlg.h>
+#include <wx/stdpaths.h>
+#include <wx/filename.h>
+#include <wx/msgdlg.h>
+#include <wx/aboutdlg.h>
+#include <wx/webview.h>
 
 // XPM
 #include <wx/image.h>
@@ -90,29 +109,94 @@
 #include "xpm/multi_window_21.xpm"
 #include "xpm/window_21.xpm"
 
-// ------------------------------------------------
-// Version
-// ------------------------------------------------
-
-using namespace std;
-
-const static wxString ALIF_STUDIO_VERSION = wxT("1.24");
-wxString ALIF_VERSION = wxT("0.0");
-
-// TODO: when click on STC, last find_position must be updated !
+// XML (Color schemes)
+#include "pugixml/pugixml.cpp"
 
 // ------------------------------------------------
-// Custum Include
+// IDE Version
 // ------------------------------------------------
 
-//#include "alifstudio_path.h"
-#include "alifstudio_tools_convert.h"
+const static wxString Alif_Studio_Version = wxT("2.0 Beta 1");
+wxString Alif_Compiler_Version = wxT("0");
 
 // ------------------------------------------------
-// Scintilla Define / include
+// Todo list
 // ------------------------------------------------
 
-// For Windows and Linux
+// TODO: When click on STC, last find_position must be updated imidiatly.
+// TODO: STC for macOS need extra work or waiting for next update.
+// TODO: CODE_DROP() Need work to drop files into IDE
+
+// ------------------------------------------------
+// Tools methods
+// ------------------------------------------------
+
+// WX Reserved: 4999 to 5999.
+int gID = 5901;
+int GET_ID(){
+	gID++; 
+	return gID;
+}
+
+string CONVERT_INT_TO_STRING(int INT_VAL)
+{
+	// Int --> String
+	stringstream STRING_STREAM_BUFFER;
+	STRING_STREAM_BUFFER << INT_VAL;
+	string STRING_BUFFER = STRING_STREAM_BUFFER.str();
+	return STRING_BUFFER;
+}
+
+string CONVERT_DOUBLE_TO_STRING(double INT_VAL)
+{
+	// Int --> String
+	stringstream STRING_STREAM_BUFFER;
+	STRING_STREAM_BUFFER << INT_VAL;
+	string STRING_BUFFER = STRING_STREAM_BUFFER.str();
+	return STRING_BUFFER;
+}
+
+string CONVERT_STRING_ARRAY_TO_STRING(string STRING_ARRAY_VAL[2048], unsigned LONG)
+{
+	// string[123] --> String
+	stringstream STRING_STREAM_BUFFER;
+	
+	for (unsigned p = 0; p <= LONG; p++)
+	{
+		STRING_STREAM_BUFFER << STRING_ARRAY_VAL[p];
+	}
+	
+	string STRING_BUFFER = STRING_STREAM_BUFFER.str();
+	return STRING_BUFFER;
+}
+
+int CONVERT_STRING_TO_INT(wxString STRING)
+{
+	// string --> int
+	
+	return wxAtoi(STRING);
+}
+
+string CONVERT_WCHAT_T_TO_STRING(wchar_t* WCHART_T_VAL)
+{
+	// wchar_t --> String
+	wstring W_STRING_BUFFER (WCHART_T_VAL);
+	string STRING_BUFFER (W_STRING_BUFFER.begin(), W_STRING_BUFFER.end());
+	return STRING_BUFFER;
+}
+
+string CONVERT_CHAR_TO_STRING(char* CHART_VAL)
+{
+	// Char --> String
+	string STRING_BUFFER(CHART_VAL);
+	return STRING_BUFFER;
+}
+
+// ------------------------------------------------
+// Scintilla (STC)
+// ------------------------------------------------
+
+// Windows / Linux
 #define SCI_WORDRIGHTEND 2441
 #define SCI_CHARRIGHT 2306
 #define SCI_CHARRIGHTEXTEND 2307
@@ -140,19 +224,7 @@ wxString ALIF_VERSION = wxT("0.0");
 //#define SC_BIDIRECTIONAL_R2L
 */
 
-#include <wx/stc/stc.h> // Scintilla
-
-// ****************************************************************************
-// ** GLOBAL *******************************************************************
-// ****************************************************************************
-
-// ------------------------------------------------
-// Rand
-// ------------------------------------------------
-
-// WX Reserved : 4999 et 5999.
-int IDG = 5901;
-int GET_ID(){IDG++; return IDG;}
+#include <wx/stc/stc.h> // Scintilla (STC)
 
 // ------------------------------------------------
 // GLOBAL ID
@@ -193,78 +265,13 @@ enum {
 };
 
 // ------------------------------------------------
-// GLOBAL Var
-// ------------------------------------------------
-
-int ID_CODE_ERROR_INDICATOR = 8;				// or any number between 8 and 32
-//int CODE_ERROR_INDICATOR_START;				// to clear error when new compile
-//int CODE_ERROR_INDICATOR_LEN;					// to clear error when new compile
-//int CODE_ERROR_INDICATOR_LINE_NUMBER = -1;	// to clear error when new compile
-bool CODE_ERROR_INDICATOR = false;				// to clear error when new compile
-
-wxString FIND_WORD;
-bool IS_FOUND = false;
-int FIND_LAST_POS = 0;
-size_t FIND_LEN;
-
-bool UILOG_ERROR = false;
-
-// ------------------------------------------------
-// GLOBAL VAR
-// ------------------------------------------------
-
-std::string INSTALL_PATH;
-bool PATH_CONTAIN_SPACE = false;
-
-wxString PATH_TEMP;
-wxString PATH_FULL_ALIF_COMPILER;
-wxString PATH_FULL_SOURCE;
-wxString PATH_FULL_EXECUTABLE;
-wxString PATH_FULL_LOG;
-wxString PATH_FULL_UPDATE;
-wxString PATH_DIRECTORY;
-wxString CURRENT_FILE_EXTENSION;
-wxString PATH_FULL_PDF;
-
-wxString SOURCE_FILE_NAME;
-
-#ifdef ALIF_STUDIO_NO_STC
-	bool CODE_MODIFIED = false;
-#endif
-
-bool IGNORE_UPDATE_SETTINGS_EVENT = false;
-bool WINDOW_RESIZING_BY_SYSTEM = false;
-
-wxTreeItemId TREE_ID_FILES_ROOT;
-wxTreeItemId TREE_ID_FILES_ITEM[64];
-wxTreeItemId TREE_ID_FILES_LAST_BOLD;
-wxString TREE_FILES_PATH[64];
-wxString TREE_FILES_TYPE[64];
-unsigned int TREE_FILES_TOTAL_ITEM;
-bool TREE_FILES_HAVE_ITEM;
-
-wxTreeItemId TREE_ID_CONTROL_ROOT;
-wxTreeItemId TREE_ID_CONTROL_ITEM_BUTTON;
-wxTreeItemId TREE_ID_CONTROL_ITEM_TXT;
-wxTreeItemId TREE_ID_CONTROL_ITEM_LABEL;
-
-bool DRAW_CONTROL = false;
-wxString DRAW_TYPE;
-
-bool FIRST_GENERATED_CODE = false;
-
-bool ARG_OPEN_FILE = false;
-wxString ARG_OPEN_FILE_PATH;
-
-// ------------------------------------------------
-// Custum USER GLOBAL Functions Declaration
+// Global methods definition
 // ------------------------------------------------
 
 bool SAVE_FILE_UTF8(wxString TXT, wxString PATH, bool OuverWrite);
 void SET_NEW_FILE(wxString PATH);
 void Exit();
 void SET_TREE_FILES_LIST();
-
 void UI_PARSE_SOURCE();
 void UI_MANAGER(unsigned int ID_FILE);
 void UI_UPDATE_SETTINGS(unsigned int ID);
@@ -275,69 +282,13 @@ void UI_RESIZE_CONTROL(int ID);
 void UI_CONTROL_CAPTION_UPDATE(int ID);
 void UI_DRAW_NEW_CONTROL(wxString TYPE, int X, int Y);
 void UI_REMOVE_CONTROL(unsigned int ID);
-void AUI_GUI_DESIGNER(bool SHOW);
-
-// --------------------------------
-// Movable Controls ID Array
-// --------------------------------
-
-// General
-
-wxString ID_UI_CONTROL_CURRENT_TYPE;
-
-// Window 
-
-int ID_UI_WINDOW = GET_ID();
-bool WINDOW_IS_CONSTRUCTED = false;
-wxString ID_UI_WINDOW_NAME_CURRENT;
-unsigned int ID_UI_WINDOW_CURRENT =0;
-
-wxString UI_WINDOW_IDENTIFIER[64];
-wxString UI_WINDOW_CAPTION[64];
-int UI_WINDOW_X[64];
-int UI_WINDOW_Y[64];
-int UI_WINDOW_W[64];
-int UI_WINDOW_H[64];
-
-static std::map<wxString, bool> UI_WINDOW_IS_SET;
-
-// Control 
-
-unsigned int UI_CONTROL_TOTAL = 0;
-wxString UI_CONTROL_WINDOW[64];
-wxString UI_CONTROL_TYPE[64];
-wxString UI_CONTROL_IDENTIFIER[64];
-wxString UI_CONTROL_CAPTION[64];
-int UI_CONTROL_X[64];
-int UI_CONTROL_Y[64];
-int UI_CONTROL_W[64];
-int UI_CONTROL_H[64];
-std::map<wxString, bool> UI_CONTROL_INSIDE_WINDOW_IS_SET;
-
-static std::map<wxString, bool> UI_CONTROL_IS_SET;
-
-unsigned int ID_UI_CONTROL_CURRENT =0;
-
-// Tree 
-
-wxTreeItemId TREE_ID_WINDOW_ROOT;
-wxTreeItemId TREE_ID_WINDOW_ITEM[64];
-unsigned int TREE_WINDOW_TOTAL_ITEM;
-wxTreeItemId TREE_ID_WINDOW_LAST_BOLD;
-
-// wxAui Panels
-
-wxAuiManager AUI_MANAGER;
-
-// ****************************************************************************
-// ** Class Window Definition *************************************************
-// ****************************************************************************
+void UI_DesignerShow(bool DesignerShow, bool WebUIShow);
 
 // ------------------------------------------------
-// Class Window Main Definition
+// Window Main Definition
 // ------------------------------------------------
 
-class CLASS_WINDOW_MAIN : public wxFrame
+class Window_Main : public wxFrame
 {
     public:
 		// ------------------------------------------------
@@ -347,16 +298,16 @@ class CLASS_WINDOW_MAIN : public wxFrame
 		void OnClose(wxCloseEvent& event);
 
 		// ------------------------------------------------
-		// Window Main Class Constructeur
+		// Window Main Class Constructor
 		// ------------------------------------------------
 		
-        CLASS_WINDOW_MAIN ();
+        Window_Main ();
 		
 		// ------------------------------------------------
-		// Window Main Class Destructeur
+		// Window Main Class Destructor
 		// ------------------------------------------------
 		
-        virtual ~CLASS_WINDOW_MAIN();
+        virtual ~Window_Main();
 		
 		// ------------------------------------------------
 		// Window Main User Functions Declaration
@@ -419,7 +370,7 @@ class CLASS_WINDOW_MAIN : public wxFrame
 		void TREE_CONTROLES_DCLICK(wxTreeEvent& event);
 		void PROPERTIES_CHANGED(wxPropertyGridEvent& event);
 
-		#ifdef ALIF_STUDIO_NO_STC
+		#ifdef AlifStudio_DisableSTC
 			//void CODE_CHARADDED(wxCommandEvent& event); // Onlly KeyDown.
 			void CODE_KEYDOWN(wxKeyEvent& event);
 		#else
@@ -431,15 +382,15 @@ class CLASS_WINDOW_MAIN : public wxFrame
 		//void CODE_DROP(wxDropFilesEvent& event);
 
     private:
-		DECLARE_NO_COPY_CLASS(CLASS_WINDOW_MAIN) // To Search in google...
+		DECLARE_NO_COPY_CLASS(Window_Main) // To Search in google...
         DECLARE_EVENT_TABLE() // Déclaration d'une table STATIQUE d'évènements
 };
 
 // ------------------------------------------------
-// Class UI Window Definition
+// UI Window Definition
 // ------------------------------------------------
 
-class UI_CLASS_WINDOW : public wxDialog
+class Window_UI : public wxDialog
 {
     public:
 		// ------------------------------------------------
@@ -449,16 +400,16 @@ class UI_CLASS_WINDOW : public wxDialog
 		void OnClose(wxCloseEvent& event);
 		
 		// ------------------------------------------------
-		// UI Window Class Constructeur
+		// UI Window Class Constructor
 		// ------------------------------------------------
 		
-        UI_CLASS_WINDOW(wxString CAPTION, wxPoint pos, wxSize size);
+        Window_UI(wxString CAPTION, wxPoint pos, wxSize size);
 		
 		// ------------------------------------------------
-		// UI Window Class Destructeur
+		// UI Window Class Destructor
 		// ------------------------------------------------
 		
-        virtual ~UI_CLASS_WINDOW();
+        virtual ~Window_UI();
 		
 		// ------------------------------------------------
 		// UI Window Functions
@@ -470,24 +421,120 @@ class UI_CLASS_WINDOW : public wxDialog
 		void OnResize(wxSizeEvent& event);
 
     private:
-		DECLARE_NO_COPY_CLASS(UI_CLASS_WINDOW)
+		DECLARE_NO_COPY_CLASS(Window_UI)
         DECLARE_EVENT_TABLE()
 };
 
-// ****************************************************************************
-// ** OBJ Declaration ************************************************************
-// ****************************************************************************
-
 // ------------------------------------------------
-// Windows OBJs Declaration
+// Global declaration
 // ------------------------------------------------
 
-CLASS_WINDOW_MAIN* OBJ_CLASS_WINDOW_MAIN;
-UI_CLASS_WINDOW* OBJ_UI_CLASS_WINDOW;
+// General
 
-// ------------------------------------------------
-// Window Main User Widget OBJ Declaration
-// ------------------------------------------------
+wxString ID_UI_CONTROL_CURRENT_TYPE;
+
+// Window 
+
+int ID_UI_WINDOW = GET_ID();
+bool WINDOW_IS_CONSTRUCTED = false;
+wxString ID_UI_WINDOW_NAME_CURRENT;
+unsigned int ID_UI_WINDOW_CURRENT =0;
+
+wxString UI_WINDOW_IDENTIFIER[64];
+wxString UI_WINDOW_CAPTION[64];
+int UI_WINDOW_X[64];
+int UI_WINDOW_Y[64];
+int UI_WINDOW_W[64];
+int UI_WINDOW_H[64];
+
+static std::map<wxString, bool> UI_WINDOW_IS_SET;
+
+// Control 
+
+unsigned int UI_CONTROL_TOTAL = 0;
+wxString UI_CONTROL_WINDOW[64];
+wxString UI_CONTROL_TYPE[64];
+wxString UI_CONTROL_IDENTIFIER[64];
+wxString UI_CONTROL_CAPTION[64];
+int UI_CONTROL_X[64];
+int UI_CONTROL_Y[64];
+int UI_CONTROL_W[64];
+int UI_CONTROL_H[64];
+std::map<wxString, bool> UI_CONTROL_INSIDE_WINDOW_IS_SET;
+
+static std::map<wxString, bool> UI_CONTROL_IS_SET;
+
+unsigned int ID_UI_CONTROL_CURRENT =0;
+
+// Tree 
+
+wxTreeItemId TREE_ID_WINDOW_ROOT;
+wxTreeItemId TREE_ID_WINDOW_ITEM[64];
+unsigned int TREE_WINDOW_TOTAL_ITEM;
+wxTreeItemId TREE_ID_WINDOW_LAST_BOLD;
+
+// wxAui Panels
+
+wxAuiManager AUI_MANAGER;
+
+int ID_CODE_ERROR_INDICATOR = 8;				// or any number between 8 and 32
+//int CODE_ERROR_INDICATOR_START;				// to clear error when new compile
+//int CODE_ERROR_INDICATOR_LEN;					// to clear error when new compile
+//int CODE_ERROR_INDICATOR_LINE_NUMBER = -1;	// to clear error when new compile
+bool CODE_ERROR_INDICATOR = false;				// to clear error when new compile
+
+wxString FIND_WORD;
+bool IS_FOUND = false;
+int FIND_LAST_POS = 0;
+size_t FIND_LEN;
+
+bool UILOG_ERROR = false;
+
+std::string INSTALL_PATH;
+bool PATH_CONTAIN_SPACE = false;
+
+wxString PATH_TEMP;
+wxString PATH_FULL_ALIF_COMPILER;
+wxString PATH_FULL_SOURCE;
+wxString PATH_FULL_EXECUTABLE;
+wxString PATH_FULL_LOG;
+wxString PATH_FULL_UPDATE;
+wxString PATH_DIRECTORY;
+wxString CURRENT_FILE_EXTENSION;
+wxString PATH_FULL_PDF;
+
+wxString SOURCE_FILE_NAME;
+
+#ifdef AlifStudio_DisableSTC
+	bool CODE_MODIFIED = false;
+#endif
+
+bool IGNORE_UPDATE_SETTINGS_EVENT = false;
+bool WINDOW_RESIZING_BY_SYSTEM = false;
+
+wxTreeItemId TREE_ID_FILES_ROOT;
+wxTreeItemId TREE_ID_FILES_ITEM[64];
+wxTreeItemId TREE_ID_FILES_LAST_BOLD;
+wxString TREE_FILES_PATH[64];
+wxString TREE_FILES_TYPE[64];
+unsigned int TREE_FILES_TOTAL_ITEM;
+bool TREE_FILES_HAVE_ITEM;
+
+wxTreeItemId TREE_ID_CONTROL_ROOT;
+wxTreeItemId TREE_ID_CONTROL_ITEM_BUTTON;
+wxTreeItemId TREE_ID_CONTROL_ITEM_TXT;
+wxTreeItemId TREE_ID_CONTROL_ITEM_LABEL;
+
+bool DRAW_CONTROL = false;
+wxString DRAW_TYPE;
+
+bool FIRST_GENERATED_CODE = false;
+
+bool ARG_OPEN_FILE = false;
+wxString ARG_OPEN_FILE_PATH;
+
+Window_Main* OBJ_CLASS_WINDOW_MAIN;
+Window_UI* OBJ_UI_CLASS_WINDOW;
 
 wxMenuBar* MENU_BAR;
 
@@ -508,10 +555,10 @@ wxMenu* MENU_ABOUT;
 
 wxToolBar* OBJ_TOOLBAR;
 
-#ifdef ALIF_STUDIO_NO_STC
-	wxTextCtrl*	OBJ_CODE;
+#ifdef AlifStudio_DisableSTC
+	wxTextCtrl*	obj_CODE;
 #else
-	wxStyledTextCtrl*	OBJ_CODE;
+	wxStyledTextCtrl*	obj_CODE;
 #endif
 
 wxTextCtrl*			OBJ_LOG;
@@ -522,9 +569,11 @@ wxTreeCtrl* OBJ_TREE_CONTROLS;
 
 wxPropertyGrid* OBJ_PROPERTIES;
 
-// ****************************************************************************
-// ** Class DrawPanel Definition ************************************************
-// ****************************************************************************
+wxWebView* obj_WebUI;
+
+// --------------------------------
+// DrawPanel Definition
+// --------------------------------
 
 class DrawPanel : public wxPanel
 {
@@ -668,10 +717,6 @@ void DrawPanel::render(wxDC&  dc)
 // --------------------------------
 
 DrawPanel* OBJ_WINDOW_BASE_PANEL;
-
-// ****************************************************************************
-// ** Class Movable Widgets Definition ****************************************
-// ****************************************************************************
 
 // --------------------------------
 // Class Movable Controls
@@ -1008,10 +1053,10 @@ public:
 
 Movable<wxButton> *OBJ_UI_BUTTON_ARRAY[64];
 Movable<wxTextCtrl> *OBJ_UI_TXT_ARRAY[64];
-Movable<wxStaticText> *OBJ_UI_LABEL_ARRAY[64]; // change it his txt bcs label is hidden if empty caption...
+Movable<wxStaticText> *OBJ_UI_LABEL_ARRAY[64];
 
 // --------------------------------
-// UI Usable
+// Methods
 // --------------------------------
 
 void UI_BUTTON_BUILD(bool STATUS)
@@ -1048,8 +1093,8 @@ void OPEN_NEW_FILE(wxString FILE_PATH)
 	{
 		wxMessageBox(wxT("عذرا، الملف لم يعد موجودا \n\n") + FILE_PATH, wxT("خطأ"), wxICON_WARNING);
 
-		// Hide Aui Designer Panels
-		AUI_GUI_DESIGNER(false);
+		// Hide Aui Designer Panels / UI Web
+		UI_DesignerShow(false, false);
 	}
 	else
 	{
@@ -1058,8 +1103,8 @@ void OPEN_NEW_FILE(wxString FILE_PATH)
 			CURRENT_FILE_EXTENSION = "ALIF";
 		else if (fn.GetExt() == "alifui")
 			CURRENT_FILE_EXTENSION = "ALIFUI";
-		else if (fn.GetExt() == "aliflib")
-			CURRENT_FILE_EXTENSION = "ALIFLIB";
+		else if (fn.GetExt() == "ALIFC")
+			CURRENT_FILE_EXTENSION = "ALIFC";
 		else
 		{
 			wxMessageBox("امتداد الملف غير معروف - " + fn.GetExt(), wxT("خطأ"), wxICON_WARNING);
@@ -1067,8 +1112,8 @@ void OPEN_NEW_FILE(wxString FILE_PATH)
 			//return false;
 			CURRENT_FILE_EXTENSION = "ALIF";
 
-			// Hide Aui Designer Panels
-			AUI_GUI_DESIGNER(false);
+			// Hide Aui Designer Panels / UI Web
+			UI_DesignerShow(false, false);
 		}
 
 		PATH_DIRECTORY = fn.GetPathWithSep();
@@ -1095,94 +1140,85 @@ void OPEN_NEW_FILE(wxString FILE_PATH)
 	}
 }
 
-// ****************************************************************************
-// ** Event Static Table ******************************************************
-// ****************************************************************************
-
 // ------------------------------------------------
 // Window Main Event Table
 // ------------------------------------------------
 
-BEGIN_EVENT_TABLE(CLASS_WINDOW_MAIN, wxFrame)
+BEGIN_EVENT_TABLE(Window_Main, wxFrame)
 
-	EVT_CLOSE(CLASS_WINDOW_MAIN::OnClose)
+	EVT_CLOSE(Window_Main::OnClose)
 	
-	// Menu
-		// File
-		EVT_MENU(wxID_OPEN, CLASS_WINDOW_MAIN::OnOpen)
-		EVT_MENU(wxID_SAVE, CLASS_WINDOW_MAIN::OnSave)
-		EVT_MENU(wxID_SAVEAS, CLASS_WINDOW_MAIN::OnSaveAs)
-		EVT_MENU(wxID_EXIT, CLASS_WINDOW_MAIN::OnCloseMenu)
-		// Edit
-		EVT_MENU(wxID_UNDO, CLASS_WINDOW_MAIN::EDIT_UNDO)
-		EVT_MENU(wxID_REDO, CLASS_WINDOW_MAIN::EDIT_REDO)
-		EVT_MENU(wxID_CUT, CLASS_WINDOW_MAIN::EDIT_CUT)
-		EVT_MENU(wxID_COPY, CLASS_WINDOW_MAIN::EDIT_COPY)
-		EVT_MENU(wxID_PASTE, CLASS_WINDOW_MAIN::EDIT_PASTE)
-		EVT_MENU(wxID_DELETE, CLASS_WINDOW_MAIN::EDIT_DELETE)
-		// Search
-		EVT_MENU(wxID_FIND, CLASS_WINDOW_MAIN::FIND)
-		EVT_MENU(ID_MENU_FIND_NEXT, CLASS_WINDOW_MAIN::FIND_NEXT)
-		EVT_MENU(wxID_REPLACE, CLASS_WINDOW_MAIN::REPLACE)
-		EVT_MENU(ID_MENU_REPLACE_ALL, CLASS_WINDOW_MAIN::REPLACE_ALL)
-		// View
-		EVT_MENU(ID_MENU_LTR, CLASS_WINDOW_MAIN::CODE_LTR)
-		EVT_MENU(ID_MENU_RTL, CLASS_WINDOW_MAIN::CODE_RTL)
-		// Project
-		EVT_MENU(ID_MENU_BUILD, CLASS_WINDOW_MAIN::BUILD)
-		EVT_MENU(ID_MENU_COMPILE, CLASS_WINDOW_MAIN::COMPILE)
-		EVT_MENU(ID_MENU_RUN, CLASS_WINDOW_MAIN::RUN)
-		// Prop
-		EVT_MENU(ID_MENU_SETTING_IDE, CLASS_WINDOW_MAIN::PROP_IDE)
-		EVT_MENU(ID_MENU_SETTING_FONT, CLASS_WINDOW_MAIN::PROP_FONT)
-		EVT_MENU(ID_MENU_SETTING_COMPILER, CLASS_WINDOW_MAIN::PROP_COMPILER)
-		// Update
-		EVT_MENU(ID_MENU_UPDATE, CLASS_WINDOW_MAIN::UPDATE)
-		//EVT_MENU(ID_MENU_UPDATE_BY_FILE, CLASS_WINDOW_MAIN::UPDATE_BY_FILE)
-		// Help
-		EVT_MENU(ID_MENU_LEARN_PDF, CLASS_WINDOW_MAIN::HELP_PDF)
-		//EVT_MENU(ID_MENU_LEARN_HTML, CLASS_WINDOW_MAIN::HELP_HTML)
-		EVT_MENU(ID_MENU_LEARN_ONLINE, CLASS_WINDOW_MAIN::HELP_ONLINE)
-		// About
-		EVT_MENU(ID_MENU_ABOUT_IDE, CLASS_WINDOW_MAIN::ABOUT_IDE)
-		EVT_MENU(ID_MENU_ABOUT_BUG, CLASS_WINDOW_MAIN::ABOUT_BUG)
-
-		#if  __APPLE__
-			// Mac About
-			EVT_MENU(wxID_ABOUT, CLASS_WINDOW_MAIN::OnAbout)
-		#endif
+	// -- Menu --
+	// File
+	EVT_MENU(wxID_OPEN, Window_Main::OnOpen)
+	EVT_MENU(wxID_SAVE, Window_Main::OnSave)
+	EVT_MENU(wxID_SAVEAS, Window_Main::OnSaveAs)
+	EVT_MENU(wxID_EXIT, Window_Main::OnCloseMenu)
+	// Edit
+	EVT_MENU(wxID_UNDO, Window_Main::EDIT_UNDO)
+	EVT_MENU(wxID_REDO, Window_Main::EDIT_REDO)
+	EVT_MENU(wxID_CUT, Window_Main::EDIT_CUT)
+	EVT_MENU(wxID_COPY, Window_Main::EDIT_COPY)
+	EVT_MENU(wxID_PASTE, Window_Main::EDIT_PASTE)
+	EVT_MENU(wxID_DELETE, Window_Main::EDIT_DELETE)
+	// Search
+	EVT_MENU(wxID_FIND, Window_Main::FIND)
+	EVT_MENU(ID_MENU_FIND_NEXT, Window_Main::FIND_NEXT)
+	EVT_MENU(wxID_REPLACE, Window_Main::REPLACE)
+	EVT_MENU(ID_MENU_REPLACE_ALL, Window_Main::REPLACE_ALL)
+	// View
+	EVT_MENU(ID_MENU_LTR, Window_Main::CODE_LTR)
+	EVT_MENU(ID_MENU_RTL, Window_Main::CODE_RTL)
+	// Project
+	EVT_MENU(ID_MENU_BUILD, Window_Main::BUILD)
+	EVT_MENU(ID_MENU_COMPILE, Window_Main::COMPILE)
+	EVT_MENU(ID_MENU_RUN, Window_Main::RUN)
+	// Prop
+	EVT_MENU(ID_MENU_SETTING_IDE, Window_Main::PROP_IDE)
+	EVT_MENU(ID_MENU_SETTING_FONT, Window_Main::PROP_FONT)
+	EVT_MENU(ID_MENU_SETTING_COMPILER, Window_Main::PROP_COMPILER)
+	// Update
+	EVT_MENU(ID_MENU_UPDATE, Window_Main::UPDATE)
+	// Help
+	EVT_MENU(ID_MENU_LEARN_PDF, Window_Main::HELP_PDF)
+	EVT_MENU(ID_MENU_LEARN_ONLINE, Window_Main::HELP_ONLINE)
+	// About
+	EVT_MENU(ID_MENU_ABOUT_IDE, Window_Main::ABOUT_IDE)
+	EVT_MENU(ID_MENU_ABOUT_BUG, Window_Main::ABOUT_BUG)
+	#if  __APPLE__
+		// Mac About
+		EVT_MENU(wxID_ABOUT, Window_Main::OnAbout)
+	#endif
 
 	// ----------
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 
-		// We use Connect()
-		
-		//EVT_TEXT(ID_CODE, CLASS_WINDOW_MAIN::CODE_CHARADDED)
-		//EVT_KEY_DOWN(ID_CODE, CLASS_WINDOW_MAIN::CODE_KEYDOWN)
+		// We use Connect() for now
+		//EVT_TEXT(ID_CODE, Window_Main::Code_OnChange)
+		//EVT_KEY_DOWN(ID_CODE, Window_Main::CODE_KEYDOWN)
 
 	#else
 
-		//EVT_STC_CHANGE(ID_CODE, CLASS_WINDOW_MAIN::CODE_CHANGE) // Key Down Event ! // EVT_STC_CHANGE
-		EVT_STC_CHARADDED(ID_CODE, CLASS_WINDOW_MAIN::CODE_CHARADDED) 
-		EVT_STC_CLIPBOARD_PASTE(ID_CODE, CLASS_WINDOW_MAIN::CODE_CHARADDED)
-		EVT_STC_AUTOCOMP_COMPLETED(ID_CODE, CLASS_WINDOW_MAIN::CODE_AUTOCOMP_COMPLETED) // Add Space after Token
-		//EVT_STC_DO_DROP (ID_CODE, CLASS_WINDOW_MAIN::CODE_DROP)
+		// EVT_STC_CHANGE | EVT_STC_CHARADDED
+		EVT_STC_CHANGE(ID_CODE, Window_Main::CODE_CHARADDED) 
+		EVT_STC_CLIPBOARD_PASTE(ID_CODE, Window_Main::CODE_CHARADDED)
+		EVT_STC_AUTOCOMP_COMPLETED(ID_CODE, Window_Main::CODE_AUTOCOMP_COMPLETED)
+		//EVT_STC_DO_DROP (ID_CODE, Window_Main::CODE_DROP)
 
 	#endif
 	
-	EVT_TREE_ITEM_ACTIVATED			(ID_TREE_FILES, CLASS_WINDOW_MAIN::TREE_FILES_DCLICK)
-	EVT_TREE_ITEM_ACTIVATED			(ID_TREE_CONTROLS, CLASS_WINDOW_MAIN::TREE_CONTROLES_DCLICK)
+	EVT_TREE_ITEM_ACTIVATED			(ID_TREE_FILES, Window_Main::TREE_FILES_DCLICK)
+	EVT_TREE_ITEM_ACTIVATED			(ID_TREE_CONTROLS, Window_Main::TREE_CONTROLES_DCLICK)
+	EVT_TREE_ITEM_ACTIVATED			(ID_TREE_WINDOWS, Window_Main::TREE_WINDOW_DCLICK)
+	EVT_TREE_ITEM_RIGHT_CLICK		(ID_TREE_WINDOWS, Window_Main::TREE_WINDOW_RCLICK)
+	//EVT_TREE_ITEM_MENU			(ID_TREE_WINDOWS, Window_Main::TREE_WINDOW_RCLICK)
+	//EVT_TREE_ITEM_MENU			(ID_TREE_WINDOWS, Window_Main::TREE_WINDOW_RCLICK)
 	
-	EVT_TREE_ITEM_ACTIVATED			(ID_TREE_WINDOWS, CLASS_WINDOW_MAIN::TREE_WINDOW_DCLICK)
-	EVT_TREE_ITEM_RIGHT_CLICK		(ID_TREE_WINDOWS, CLASS_WINDOW_MAIN::TREE_WINDOW_RCLICK)
-	//EVT_TREE_ITEM_MENU				(ID_TREE_WINDOWS, CLASS_WINDOW_MAIN::TREE_WINDOW_RCLICK)
-	//EVT_TREE_ITEM_MENU				(ID_TREE_WINDOWS, CLASS_WINDOW_MAIN::TREE_WINDOW_RCLICK)
+	EVT_TREE_BEGIN_DRAG				(ID_TREE_CONTROLS, Window_Main::TREE_CONTROLES_DCLICK)
+	//EVT_TREE_ITEM_COLLAPSED		(ID_TREE_CONTROLS, Window_Main::TREE_CONTROLES_DCLICK)
 	
-	EVT_TREE_BEGIN_DRAG				(ID_TREE_CONTROLS, CLASS_WINDOW_MAIN::TREE_CONTROLES_DCLICK)
-	//EVT_TREE_ITEM_COLLAPSED		(ID_TREE_CONTROLS, CLASS_WINDOW_MAIN::TREE_CONTROLES_DCLICK)
-	
-	EVT_PG_CHANGED(ID_PROPERTIES, CLASS_WINDOW_MAIN::PROPERTIES_CHANGED)
+	EVT_PG_CHANGED(ID_PROPERTIES, Window_Main::PROPERTIES_CHANGED)
 	
 END_EVENT_TABLE()
 
@@ -1190,23 +1226,19 @@ END_EVENT_TABLE()
 // UI Window Event Table
 // ------------------------------------------------
 
-BEGIN_EVENT_TABLE(UI_CLASS_WINDOW, wxDialog)
+BEGIN_EVENT_TABLE(Window_UI, wxDialog)
 
-	EVT_CLOSE			(UI_CLASS_WINDOW::OnClose)
-	EVT_SIZE			(UI_CLASS_WINDOW::OnResize)
-	EVT_NAVIGATION_KEY	(UI_CLASS_WINDOW::OnNavigationKey)
+	EVT_CLOSE			(Window_UI::OnClose)
+	EVT_SIZE			(Window_UI::OnResize)
+	EVT_NAVIGATION_KEY	(Window_UI::OnNavigationKey)
 	
 END_EVENT_TABLE()
 
-// ****************************************************************************
-// ** Constructeur ***************************************************************
-// ****************************************************************************
-
 // ------------------------------------------------
-// Window Main Constructeur
+// Window Main Constructor
 // ------------------------------------------------
 
-CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() : 
+Window_Main :: Window_Main() : 
 	wxFrame(NULL, ID_WINDOW_MAIN, 
 	wxT("ألف ستوديو [نسخة تجريبية]"),
 	wxPoint(50, 50),
@@ -1262,11 +1294,11 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 
     OBJ_TOOLBAR->Realize();
 	
-	Connect(ID_TOOLBAR_NEW, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(CLASS_WINDOW_MAIN::OnNew));
-	Connect(ID_TOOLBAR_OPEN, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(CLASS_WINDOW_MAIN::OnOpen));
-	Connect(ID_TOOLBAR_BUILD, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(CLASS_WINDOW_MAIN::BUILD));
-	Connect(ID_TOOLBAR_UPDATE, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(CLASS_WINDOW_MAIN::UPDATE));
-	Connect(ID_TOOLBAR_HELP, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(CLASS_WINDOW_MAIN::HELP_PDF));
+	Connect(ID_TOOLBAR_NEW, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(Window_Main::OnNew));
+	Connect(ID_TOOLBAR_OPEN, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(Window_Main::OnOpen));
+	Connect(ID_TOOLBAR_BUILD, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(Window_Main::BUILD));
+	Connect(ID_TOOLBAR_UPDATE, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(Window_Main::UPDATE));
+	Connect(ID_TOOLBAR_HELP, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler(Window_Main::HELP_PDF));
 	
 	// -------------------------
 	// Menu Construction
@@ -1484,33 +1516,16 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 	#ifdef _WIN32
 
 		// SCINTILLA Code - Microsoft Windows
-			
-		/*
-		OBJ_CODE = new wxStyledTextCtrl(OBJ_PANEL_1, wxID_ANY, wxPoint(0, 0), wxSize(600, 10000), 
-		wxTE_MULTILINE | wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB |  
-		WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR | WS_EX_LAYOUTRTL | 
-		SCI_CHARRIGHT | SCI_WORDRIGHTEND | SCI_CHARRIGHTEXTEND | SCI_WORDRIGHTENDEXTEND | SCI_SETMARGINRIGHT | SCI_WORDRIGHT | SCI_WORDRIGHTEXTEND | SCI_DELWORDRIGHT | SCI_DELWORDRIGHTEND | SCI_WORDPARTRIGHT | SCI_WORDPARTRIGHTEXTEND);
-		// |WS_EX_LAYOUTRTL|ALIGN_RIGHT|SCI_LAYOUTRTL|SCI_WORDRIGHT
-		// wxBORDER_NONE | wxTE_NO_VSCROLL
-		//OBJ_CODE_SCINTILLA->SetLayoutDirection(SCI_WORDRIGHT);
-		//OBJ_CODE_SCINTILLA->Clear();
-		//OBJ_CODE_SCINTILLA->ClearAll();
 
-		OBJ_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
-		OBJ_CODE->SetCodePage(wxSTC_CP_UTF8);
-		OBJ_CODE->SetInitialSize(size);
-		*/
-
-		//OBJ_CODE = new wxStyledTextCtrl(OBJ_PANEL_1,wxID_ANY,wxDefaultPosition,this->GetSize());
-		OBJ_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
+		obj_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
 		wxTE_MULTILINE | wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB |  wxBORDER_NONE | wxVERTICAL |
 		WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR | WS_EX_LAYOUTRTL | 
 		SCI_CHARRIGHT | SCI_WORDRIGHTEND | SCI_CHARRIGHTEXTEND | SCI_WORDRIGHTENDEXTEND | SCI_SETMARGINRIGHT | 
 		SCI_WORDRIGHT | SCI_WORDRIGHTEXTEND | SCI_DELWORDRIGHT | SCI_DELWORDRIGHTEND | SCI_WORDPARTRIGHT | 
 		SCI_WORDPARTRIGHTEXTEND);
 		
-		OBJ_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
-		OBJ_CODE->SetCodePage(wxSTC_CP_UTF8);
+		obj_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
+		obj_CODE->SetCodePage(wxSTC_CP_UTF8);
 		
  		//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
 		wxFont CODE_FONT (13,
@@ -1519,19 +1534,19 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 		wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 		false, // 
 		"Courier New");
- 		OBJ_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
+ 		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
 		
 	#elif  __APPLE__
 
 		// Mac OS X
 
-		#ifdef ALIF_STUDIO_NO_STC
+		#ifdef AlifStudio_DisableSTC
 
-			OBJ_CODE = new wxTextCtrl(this, wxID_ANY, wxT(""), wxPoint(0, 0), wxSize(700, 400), // wxTextCtrl(OBJ_PANEL_2..
+			obj_CODE = new wxTextCtrl(this, wxID_ANY, wxT(""), wxPoint(0, 0), wxSize(700, 400), // wxTextCtrl(OBJ_PANEL_2..
 			wxTE_MULTILINE | wxBORDER_NONE | wxRIGHT | wxALIGN_RIGHT);
 
-			OBJ_CODE->Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(CLASS_WINDOW_MAIN::CODE_KEYDOWN), NULL, this);
-			//OBJ_CODE->Connect(wxEVT_TEXT, wxCommandEventHandler(CLASS_WINDOW_MAIN::CODE_CHARADDED), NULL, this);
+			obj_CODE->Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(Window_Main::CODE_KEYDOWN), NULL, this);
+			//obj_CODE->Connect(wxEVT_TEXT, wxCommandEventHandler(Window_Main::CODE_CHARADDED), NULL, this);
 
 			wxFont* CODE_FONT = new wxFont(18,
 			wxFONTFAMILY_MODERN, // wxFONTFAMILY_SWISS
@@ -1539,11 +1554,11 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 			wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 			false, // 
 			"Courier New");
-			OBJ_CODE->SetFont(*CODE_FONT);
+			obj_CODE->SetFont(*CODE_FONT);
 
 		#else
 
-			OBJ_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
+			obj_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
 			wxTE_MULTILINE | wxBORDER_NONE | wxVERTICAL);
 			// | wxRIGHT | wxALIGN_RIGHT | wxWANTS_CHARS | 
 			//wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB |  
@@ -1553,8 +1568,8 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 			// wxLEFTSCROLLBAR wxLAYOUTRTL wxRTLREADING
 			// WS_EX_RIGHT WS_EX_RTLREADING WS_EX_LEFTSCROLLBAR WS_EX_LAYOUTRTL 
 
-			//OBJ_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
-			OBJ_CODE->SetCodePage(wxSTC_CP_UTF8);
+			//obj_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
+			obj_CODE->SetCodePage(wxSTC_CP_UTF8);
 			
 			//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
 			wxFont CODE_FONT (20,
@@ -1563,7 +1578,7 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 			wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 			false, // 
 			"Al Bayan"); // Courier New
-			OBJ_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
+			obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
 
 		#endif
 		
@@ -1572,7 +1587,7 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 
 		/*    this saved, maybe help when using SCINTILLA on Linux, this is kanet dyal txtctrl lol
 			
-		OBJ_CODE = new wxTextCtrl(OBJ_PANEL_1, ID_CODE, wxT(""), wxPoint(0, 0), 
+		obj_CODE = new wxTextCtrl(OBJ_PANEL_1, ID_CODE, wxT(""), wxPoint(0, 0), 
 		wxSize(600, 10000), wxTE_MULTILINE | wxBORDER_NONE | wxTE_NO_VSCROLL | 
 		wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
 		*/
@@ -1582,9 +1597,9 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 		//EM_SETBIDIOPTIONS | EM_SETEDITSTYLE
 		//WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR | WS_EX_LAYOUTRTL
 		//wxHSCROLL | wxTE_RICH2 | wxTE_RIGHT
-		//OBJ_CODE->SetLayoutDirection(wxLayout_RightToLeft);
+		//obj_CODE->SetLayoutDirection(wxLayout_RightToLeft);
 
-		OBJ_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
+		obj_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
 		wxTE_MULTILINE | wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB |  wxBORDER_NONE | wxVERTICAL |
 		wxRIGHT | 
 		SCI_CHARRIGHT | SCI_WORDRIGHTEND | SCI_CHARRIGHTEXTEND | SCI_WORDRIGHTENDEXTEND | SCI_SETMARGINRIGHT | 
@@ -1594,8 +1609,8 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 		// wxLEFTSCROLLBAR wxLAYOUTRTL wxRTLREADING
 		// WS_EX_RIGHT WS_EX_RTLREADING WS_EX_LEFTSCROLLBAR WS_EX_LAYOUTRTL 
 
-		OBJ_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
-		OBJ_CODE->SetCodePage(wxSTC_CP_UTF8);
+		obj_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
+		obj_CODE->SetCodePage(wxSTC_CP_UTF8);
 			
  		//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
 		wxFont CODE_FONT (13,
@@ -1604,178 +1619,347 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 		wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 		false, // 
 		"Courier New");
- 		OBJ_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
+ 		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
 	#endif
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 
 		// --------------------------------------
 		// TextCtrl Code - Global for all OS
 		// --------------------------------------
 
-		OBJ_CODE->SetForegroundColour(wxColour(50, 54, 58));
-		OBJ_CODE->SetBackgroundColour(wxColour(250, 251, 252));
-		OBJ_CODE->SetMargins(10, 10);
+		obj_CODE->SetForegroundColour(wxColour(50, 54, 58));
+		obj_CODE->SetBackgroundColour(wxColour(250, 251, 252));
+		obj_CODE->SetMargins(10, 10);
 
 	#else
 
 		// --------------------------------------
 		// SCINTILLA Code - Global for all OS
 		// --------------------------------------
+
+		obj_CODE->SetSTCFocus(true);
+
+		// XML Theme
 		
-		enum
-		{
+		// Default Theme
+		string UI_Theme_Name = "Alif_Light"; // Alif_Light | Alif_Dracula
+		string Color_STRING = "#A4C08C"; // {164,192,140};
+		string Color_NUMBER = "#D7693D"; // {215,105,61};
+		string Color_COMMENT = "#AAB0BE"; // {170,176,190};
+		string Color_CODE = "#5A6670"; // {90,102,112};
+		string Color_OPERATOR = "#C56B74"; // {197,107,116};
+		string Color_WORD = "#CC7B84"; // {204,123,132};
+		string Color_WORD2 = "#AC74B1"; // {172,116,177};
+		string Color_WORD3 = "#5B8EC8"; // {91,142,200};
+		string Color_WORD4 = "#AC74B1"; // ""; // {172,116,177};
+		string Color_ERROR = "#C56B74"; // {197,107,116};
+		string Color_Line_BG = "#F7F8F9"; // {247,248,249};
+		string Color_BG = "#FAFBFC"; // {250, 251, 252};
+		string Color_FG = "#32363A"; // {50, 54, 58};
+		string Color_LINENUMBER_FG = "#A7B0C7"; // 167, 176, 199
+		string Color_LINENUMBER_BG = "#EFF1F5"; // 239, 241, 245
+
+		string XML_Path = INSTALL_PATH + "alifstudio_theme.xml";
+
+		pugi::xml_document doc;
+    	pugi::xml_parse_result result = doc.load_file(XML_Path.c_str());
+
+    	if (result){
+
+			for(auto Alif_Theme: doc.child("attributes").children("Alif_Theme")){
+
+				if (UI_Theme_Name == Alif_Theme.attribute("name").as_string()){
+
+					Color_STRING = Alif_Theme.child("Color_STRING").text().as_string();
+					Color_NUMBER = Alif_Theme.child("Color_NUMBER").text().as_string();
+					Color_COMMENT = Alif_Theme.child("Color_COMMENT").text().as_string();
+					Color_CODE = Alif_Theme.child("Color_CODE").text().as_string();
+					Color_OPERATOR = Alif_Theme.child("Color_OPERATOR").text().as_string();
+					Color_WORD = Alif_Theme.child("Color_WORD").text().as_string();
+					Color_WORD2 = Alif_Theme.child("Color_WORD2").text().as_string();
+					Color_WORD3 = Alif_Theme.child("Color_WORD3").text().as_string();
+					Color_WORD4 = Alif_Theme.child("Color_WORD4").text().as_string();
+					Color_ERROR = Alif_Theme.child("Color_ERROR").text().as_string();
+					Color_Line_BG = Alif_Theme.child("Color_Line_BG").text().as_string();
+					Color_BG = Alif_Theme.child("Color_BG").text().as_string();
+					Color_FG = Alif_Theme.child("Color_FG").text().as_string();
+					Color_LINENUMBER_FG = Alif_Theme.child("Color_LINENUMBER_FG").text().as_string();
+					Color_LINENUMBER_BG = Alif_Theme.child("Color_LINENUMBER_BG").text().as_string();
+
+					break;
+				}
+			}
+
+		} else {
+
+			// No XML file, use default colors.
+			// Colors values already initialized, 
+			// so nothing to do.
+			wxMessageBox( result.description() );
+		}
+
+		// --------------------------------------
+		
+		enum{
+
 			MARGIN_LINE_NUMBERS,
 			MARGIN_FOLD // Not used right now.
 		};
 		
 		// Backgroud Color
-		OBJ_CODE->StyleSetForeground(wxSTC_STYLE_DEFAULT, wxColour(50, 54, 58));
-		OBJ_CODE->StyleSetBackground(wxSTC_STYLE_DEFAULT, wxColour(250, 251, 252));
+		obj_CODE->StyleSetForeground(wxSTC_STYLE_DEFAULT, wxColour(Color_FG));
+		obj_CODE->StyleSetBackground(wxSTC_STYLE_DEFAULT, wxColour(Color_BG));
 		
 		// Save Code Background and Foreground colors
-		OBJ_CODE->StyleClearAll();
+		obj_CODE->StyleClearAll();
 		
 		// RTL
 		#ifdef _WIN32
-			OBJ_CODE->SetLayoutDirection(wxLayout_RightToLeft);
+			obj_CODE->SetLayoutDirection(wxLayout_RightToLeft);
 		#elif  __APPLE__
-			OBJ_CODE->SetLayoutDirection(wxLayout_RightToLeft);
-			//OBJ_CODE->SetLayoutDirection(SCI_WORDRIGHT);
+			obj_CODE->SetLayoutDirection(wxLayout_RightToLeft);
+			//obj_CODE->SetLayoutDirection(SCI_WORDRIGHT);
 		#else
-			OBJ_CODE->SetLayoutDirection(wxLayout_RightToLeft);
+			obj_CODE->SetLayoutDirection(wxLayout_RightToLeft);
 		#endif
 		
 		// SCROLLBAR
-		OBJ_CODE->SetUseHorizontalScrollBar(true);
-		OBJ_CODE->SetUseVerticalScrollBar(true);
+		obj_CODE->SetUseHorizontalScrollBar(true);
+		obj_CODE->SetUseVerticalScrollBar(true);
 
 		// Word wrap
-		//OBJ_CODE->SetWrapMode (wxSTC_WRAP_WORD); // wxSCI_WRAP_NONE
+		//obj_CODE->SetWrapMode (wxSTC_WRAP_WORD); // wxSCI_WRAP_NONE
 		
 		// Lex Lang
-		OBJ_CODE->SetLexer(wxSTC_LEX_LUA);
-		
-		// Line number
-		OBJ_CODE->SetMarginWidth (MARGIN_LINE_NUMBERS, 50);
-		OBJ_CODE->StyleSetForeground (wxSTC_STYLE_LINENUMBER, wxColour (167, 176, 199) );
-		OBJ_CODE->StyleSetBackground (wxSTC_STYLE_LINENUMBER, wxColour (239, 241, 245));
-		OBJ_CODE->SetMarginType (MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
+		obj_CODE->SetLexer(wxSTC_LEX_LUA);
 		
 		// Code Maring
-		OBJ_CODE->SetMarginRight(2); // Line at the end of code line.
-		OBJ_CODE->SetMarginLeft(12); // Margin between Line number and Code
-		//OBJ_CODE->SetMarginWidth(0,0);
+		obj_CODE->SetMarginRight(2);
+		obj_CODE->SetMarginLeft(12);
+		//obj_CODE->SetMarginWidth(0,0);
 		
 		// Tab
-		OBJ_CODE->SetTabWidth(4);
-		OBJ_CODE->SetUseTabs(1);
-		
-		
-		// Color
-		OBJ_CODE->StyleSetForeground (wxSTC_C_STRING,					wxColour(90,102,112)); // "hello"
-		OBJ_CODE->StyleSetForeground (wxSTC_C_PREPROCESSOR,				wxColour(90,102,112)); // #ألف
-		OBJ_CODE->StyleSetForeground (wxSTC_C_IDENTIFIER,				wxColour(90,102,112)); // codes..
-		OBJ_CODE->StyleSetForeground (wxSTC_C_NUMBER,					wxColour(90,102,112)); // 1 2 3
-		OBJ_CODE->StyleSetForeground (wxSTC_C_CHARACTER,				wxColour(90,102,112)); // 'hello'
-		OBJ_CODE->StyleSetForeground (wxSTC_C_WORD,						wxColour(90,102,112)); // عدد  نص
-		OBJ_CODE->StyleSetForeground (wxSTC_C_WORD2,					wxColour(90,102,112)); // نافذة  أداة
-		OBJ_CODE->StyleSetForeground (wxSTC_C_COMMENT,					wxColour(90,102,112)); // / * test...
-		OBJ_CODE->StyleSetForeground (wxSTC_C_COMMENTLINE,				wxColour(90,102,112)); // test
-		OBJ_CODE->StyleSetForeground (wxSTC_C_OPERATOR,					wxColour(90,102,112)); // + * & % -
-		// Unknown color
-		OBJ_CODE->StyleSetForeground (wxSTC_C_COMMENTDOC,				wxColour(90,102,112)); // 
-		OBJ_CODE->StyleSetForeground (wxSTC_C_COMMENTDOCKEYWORD,		wxColour(90,102,112)); // 
-		OBJ_CODE->StyleSetForeground (wxSTC_C_COMMENTDOCKEYWORDERROR,	wxColour(90,102,112)); // 
-		OBJ_CODE->StyleSetForeground (wxSTC_C_VERBATIM,					wxColour(90,102,112)); // 
-		// Word Style
-		//OBJ_CODE->StyleSetBold(wxSTC_C_PREPROCESSOR, true);
-		//OBJ_CODE->StyleSetBold(wxSTC_C_WORD, true);
-		//OBJ_CODE->StyleSetBold(wxSTC_C_WORD2, true);
-		
+		obj_CODE->SetTabWidth(4);
+		obj_CODE->SetUseTabs(1);
 
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_CHARACTER,			wxColour(90,102,112)); // unknown
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_COMMENT,			wxColour(170,176,190)); // unknown
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_COMMENTDOC,			wxColour(170,176,190)); // unknown
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_STRINGEOL,			wxColour(90,102,112)); // unknown
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_DEFAULT,			wxColour(90,102,112)); // unknown
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_LITERALSTRING,		wxColour(90,102,112)); // unknown
-		
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_COMMENTLINE,		wxColour(170,176,190));		// --comment...
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_IDENTIFIER,			wxColour(90,102,112));		// codes..
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_NUMBER,				wxColour(215,105,61));		// 1 2 3 // 205,128,101
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_OPERATOR,			wxColour(197,107,116));		// + * & % -
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_PREPROCESSOR,		wxColour(90,102,112));		// #
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_STRING,				wxColour(164,192,140));		//  "hello"
-
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD,				wxColour(204,123,132));		// red bold : نافذة الف 
-		//OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD1,			wxColour(197,107,116));		// 
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD2,				wxColour(172,116,177));		// blue bold : رئيسية
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD3,				wxColour(91,142,200));		// blue : عدد
-		OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD4,				wxColour(172,116,177));		// pink : true false
-		// For future use..
-		//OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD5,				wxColour(0,0,0));		// 
-		//OBJ_CODE->StyleSetForeground (wxSTC_LUA_WORD6,				wxColour(0,0,0));		// 
-
-		// moov 137,95,175
-		// bleu fati7 56,159,200
-		// pink 179,138,172
-
-		// Enable current line highlighting
-		OBJ_CODE->SetCaretLineVisible(true);
-		OBJ_CODE->SetCaretLineBackground(wxColour(247,248,249));
-		
-		// Code Special Color
+		// --------------------------------------
+		// Color - Alif (based on LUA theme)
+		// --------------------------------------
 		/*
-		OBJ_CODE->StyleSetForeground(wxSTC_STYLE_INDENTGUIDE, wxColour(147, 161, 161));
-			OBJ_CODE->StyleSetBackground(wxSTC_STYLE_INDENTGUIDE, wxColour(255, 255, 255));
-		OBJ_CODE->StyleSetBackground(wxSTC_STYLE_CONTROLCHAR, wxColour(101, 123, 131));
-			OBJ_CODE->StyleSetForeground(wxSTC_STYLE_CONTROLCHAR, wxColour(255, 255, 255));
-		OBJ_CODE->StyleSetBackground(wxSTC_STYLE_BRACELIGHT, wxColour(101, 123, 131));
-			OBJ_CODE->StyleSetForeground(wxSTC_STYLE_BRACELIGHT, wxColour(255, 255, 255));
-		OBJ_CODE->StyleSetBackground(wxSTC_STYLE_BRACEBAD, wxColour(101, 123, 131));
-			OBJ_CODE->StyleSetForeground(wxSTC_STYLE_BRACEBAD, wxColour(255, 255, 255));
+		- For references only -
+		#define wxSTC_LUA_DEFAULT 				0
+		#define wxSTC_LUA_COMMENT 				1
+		#define wxSTC_LUA_COMMENTLINE 			2
+		#define wxSTC_LUA_COMMENTDOC 			3
+		#define wxSTC_LUA_NUMBER 				4
+		#define wxSTC_LUA_WORD 					5
+		#define wxSTC_LUA_STRING 				6
+		#define wxSTC_LUA_CHARACTER 			7
+		#define wxSTC_LUA_LITERALSTRING 		8
+		#define wxSTC_LUA_PREPROCESSOR 			9
+		#define wxSTC_LUA_OPERATOR 				10
+		#define wxSTC_LUA_IDENTIFIER 			11
+		#define wxSTC_LUA_STRINGEOL 			12
+		#define wxSTC_LUA_WORD2 				13
+		#define wxSTC_LUA_WORD3 				14
+		#define wxSTC_LUA_WORD4 				15
+		#define wxSTC_LUA_WORD5 				16
+		#define wxSTC_LUA_WORD6 				17
+		#define wxSTC_LUA_WORD7 				18
+		#define wxSTC_LUA_WORD8 				19
+		#define wxSTC_LUA_LABEL 				20
 		*/
+		obj_CODE->StyleSetForeground (wxSTC_LUA_CHARACTER,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_LUA_COMMENT,			wxColour(Color_COMMENT));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_LUA_COMMENTDOC,			wxColour(Color_COMMENT));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_LUA_STRINGEOL,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_LUA_DEFAULT,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_LUA_LITERALSTRING,		wxColour(Color_CODE));		// unknown
 		
-		// Key words
-		wxString CPP_KEY_WORDS = "wxString wxT Asm auto bool break case catch char class const_cast continue default delete do double else enum dynamic_cast extern false float for union unsigned using friend goto if inline int long mutable virtual namespace new operator private protected public register void reinterpret_cast return short signed sizeof static static_cast volatile struct switch template this throw true try typedef typeid wchar_t while wxMessageBox wxAboutBox wxBeginBusyCursor wxBell wxCreateFileTipProvider wxDirSelector wxFileSelector wxEndBusyCursor wxGenericAboutBox wxGetColourFromUser wxGetFontFromUser wxGetMultipleChoices wxGetNumberFromUser wxGetPasswordFromUser wxGetTextFromUser wxGetMultipleChoice wxGetSingleChoice wxGetSingleChoiceIndex wxGetSingleChoiceData wxIsBusy wxMessageBox wxShowTip alignas alignof and and_eq asm auto bitand bitor catch char16_t char32_t class compl const constexpr const_cast continue decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private protected public register reinterpret_cast return short signed sizeof static static_assert static_cast struct switch template this thread_local throw true try typedef typeid typename union using virtual void volatile wchar_t while xor xor_eq"; // add wx class like wxString..
+		obj_CODE->StyleSetForeground (wxSTC_LUA_COMMENTLINE,		wxColour(Color_COMMENT));	// --comment...
+		obj_CODE->StyleSetForeground (wxSTC_LUA_IDENTIFIER,			wxColour(Color_CODE));		// codes..
+		obj_CODE->StyleSetForeground (wxSTC_LUA_NUMBER,				wxColour(Color_NUMBER));	// 1 2 3 // 205,128,101
+		obj_CODE->StyleSetForeground (wxSTC_LUA_OPERATOR,			wxColour(Color_OPERATOR));	// + * & % -
+		obj_CODE->StyleSetForeground (wxSTC_LUA_PREPROCESSOR,		wxColour(Color_CODE));		// #
+		obj_CODE->StyleSetForeground (wxSTC_LUA_STRING,				wxColour(Color_STRING));	//  "hello"
+
+		obj_CODE->StyleSetForeground (wxSTC_LUA_WORD,				wxColour(Color_WORD));		// red bold : نافذة الف 
+		//obj_CODE->StyleSetForeground (wxSTC_LUA_WORD1,			wxColour(197,107,116));		// 
+		obj_CODE->StyleSetForeground (wxSTC_LUA_WORD2,				wxColour(Color_WORD2));		// blue bold : رئيسية
+		obj_CODE->StyleSetForeground (wxSTC_LUA_WORD3,				wxColour(Color_WORD3));		// blue : عدد
+		obj_CODE->StyleSetForeground (wxSTC_LUA_WORD4,				wxColour(Color_WORD4));		// pink : true false
+		// --------------------------------------
+		// Color - C / C++ / ASM
+		// --------------------------------------
+		/*
+		obj_CODE->StyleSetForeground (wxSTC_C_STRING,					wxColour(Color_STRING)); // "hello"
+		obj_CODE->StyleSetForeground (wxSTC_C_PREPROCESSOR,				wxColour(Color_CODE)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_IDENTIFIER,				wxColour(Color_CODE)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_NUMBER,					wxColour(Color_CODE)); // 1 2 3
+		obj_CODE->StyleSetForeground (wxSTC_C_CHARACTER,				wxColour(Color_CODE)); // 'hello'
+		obj_CODE->StyleSetForeground (wxSTC_C_WORD,						wxColour(Color_CODE)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_WORD2,					wxColour(Color_CODE)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_COMMENT,					wxColour(Color_COMMENT)); // / * test...
+		obj_CODE->StyleSetForeground (wxSTC_C_COMMENTLINE,				wxColour(Color_COMMENT)); // //test
+		obj_CODE->StyleSetForeground (wxSTC_C_OPERATOR,					wxColour(Color_OPERATOR)); // + * & % -
+		// Unknown color
+		obj_CODE->StyleSetForeground (wxSTC_C_COMMENTDOC,				wxColour(Color_COMMENT)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_COMMENTDOCKEYWORD,		wxColour(Color_COMMENT)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_COMMENTDOCKEYWORDERROR,	wxColour(Color_COMMENT)); // 
+		obj_CODE->StyleSetForeground (wxSTC_C_VERBATIM,					wxColour(Color_CODE)); // 
+		// Word Style
+		//obj_CODE->StyleSetBold(wxSTC_C_PREPROCESSOR, true);
+		//obj_CODE->StyleSetBold(wxSTC_C_WORD, true);
+		//obj_CODE->StyleSetBold(wxSTC_C_WORD2, true);
+		*/
+		// --------------------------------------
+		// Color - HTML
+		// --------------------------------------
+		/*
+		obj_CODE->StyleSetForeground (wxSTC_H_DEFAULT,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_TAG,				wxColour(Color_WORD2));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_TAGUNKNOWN,		wxColour(Color_WORD3));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_ATTRIBUTE,		wxColour(Color_WORD2));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_ATTRIBUTEUNKNOWN,	wxColour(Color_WORD3));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_NUMBER,			wxColour(Color_NUMBER));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_DOUBLESTRING,		wxColour(Color_STRING));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_SINGLESTRING,		wxColour(Color_STRING));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_OTHER,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_COMMENT,			wxColour(Color_COMMENT));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_ENTITY,			wxColour(Color_CODE));		// unknown
+		*/
+		// --------------------------------------
+		// Color - CSS
+		// --------------------------------------
+		/*
+		obj_CODE->StyleSetForeground (wxSTC_CSS_DEFAULT,				wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_TAG,					wxColour(Color_WORD2));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_CLASS,					wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_PSEUDOCLASS,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_UNKNOWN_PSEUDOCLASS,	wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_OPERATOR,				wxColour(Color_OPERATOR));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_IDENTIFIER,				wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_UNKNOWN_IDENTIFIER,		wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_VALUE,					wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_COMMENT,				wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_ID,						wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_IMPORTANT,				wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_DIRECTIVE,				wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_DOUBLESTRING,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_SINGLESTRING,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_IDENTIFIER2,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_ATTRIBUTE,				wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_IDENTIFIER3,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_PSEUDOELEMENT,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_EXTENDED_IDENTIFIER,	wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_EXTENDED_PSEUDOCLASS,	wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_EXTENDED_PSEUDOELEMENT,	wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_MEDIA,					wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_CSS_VARIABLE,				wxColour(Color_CODE));		// unknown
+		*/
+		// --------------------------------------
+		// Color - XML
+		// --------------------------------------
+		/*
+		obj_CODE->StyleSetForeground (wxSTC_H_DEFAULT,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_TAG,				wxColour(Color_WORD2));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_TAGUNKNOWN,		wxColour(Color_WORD3));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_ATTRIBUTE,		wxColour(Color_WORD4));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_ATTRIBUTEUNKNOWN,	wxColour(Color_WORD4));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_NUMBER,			wxColour(Color_NUMBER));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_DOUBLESTRING,		wxColour(Color_STRING));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_SINGLESTRING,		wxColour(Color_STRING));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_OTHER,			wxColour(Color_CODE));		// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_COMMENT,			wxColour(Color_COMMENT));	// unknown
+		obj_CODE->StyleSetForeground (wxSTC_H_ENTITY,			wxColour(Color_CODE));		// unknown
+		*/
+		// --------------------------------------
+		// Color - Selected line
+		// --------------------------------------
+
+		obj_CODE->SetCaretLineVisible(true);
+		obj_CODE->SetCaretLineBackground(wxColour(Color_Line_BG));
 		
-		// ألف أضف مكتبة رئيسية ـسـ  واجهة خاص نهاية كلما نافذة دالة عدد نص كائن إذا و أو سطر رجوع
+		// --------------------------------------
+		// Color - Others
+		// --------------------------------------
+		/*
+		obj_CODE->StyleSetForeground(wxSTC_STYLE_INDENTGUIDE, wxColour(147, 161, 161));
+			obj_CODE->StyleSetBackground(wxSTC_STYLE_INDENTGUIDE, wxColour(255, 255, 255));
+		obj_CODE->StyleSetBackground(wxSTC_STYLE_CONTROLCHAR, wxColour(101, 123, 131));
+			obj_CODE->StyleSetForeground(wxSTC_STYLE_CONTROLCHAR, wxColour(255, 255, 255));
+		obj_CODE->StyleSetBackground(wxSTC_STYLE_BRACELIGHT, wxColour(101, 123, 131));
+			obj_CODE->StyleSetForeground(wxSTC_STYLE_BRACELIGHT, wxColour(255, 255, 255));
+		obj_CODE->StyleSetBackground(wxSTC_STYLE_BRACEBAD, wxColour(101, 123, 131));
+			obj_CODE->StyleSetForeground(wxSTC_STYLE_BRACEBAD, wxColour(255, 255, 255));
+		*/
+		// --------------------------------------
+		// Keywords - C++ / C / ASM / WX Classes
+		// --------------------------------------
+
+		// We can't use DescribeKeyWordSets() 
+		// because the current lexer is LUA.
+		wxString CPP_KEY_WORDS = " wxString wxT Asm auto bool break case catch char class const_cast continue default delete do double else enum dynamic_cast extern false float for union unsigned using friend goto if inline int long mutable virtual namespace new operator private protected public register void reinterpret_cast return short signed sizeof static static_cast volatile struct switch template this throw true try typedef typeid wchar_t while wxMessageBox wxAboutBox wxBeginBusyCursor wxBell wxCreateFileTipProvider wxDirSelector wxFileSelector wxEndBusyCursor wxGenericAboutBox wxGetColourFromUser wxGetFontFromUser wxGetMultipleChoices wxGetNumberFromUser wxGetPasswordFromUser wxGetTextFromUser wxGetMultipleChoice wxGetSingleChoice wxGetSingleChoiceIndex wxGetSingleChoiceData wxIsBusy wxMessageBox wxShowTip alignas alignof and and_eq asm auto bitand bitor catch char16_t char32_t class compl const constexpr const_cast continue decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private protected public register reinterpret_cast return short signed sizeof static static_assert static_cast struct switch template this thread_local throw true try typedef typeid typename union using virtual void volatile wchar_t while xor xor_eq ";
+
+		wxString CPP_KEY_WORDS_Bold = " include import ";
+
+		// --------------------------------------
+		// Keywords - HTML / CSS / JS
+		// --------------------------------------
+
+		// We can't use DescribeKeyWordSets() 
+		// because the current lexer is XML or LUA.
+		wxString HTML_CSS_JS_Keywords = " var function window open document getElementById innerHTML ";
+
+		wxString HTML_CSS_JS_Keywords_Bold = " Alif _Alif html body head script ";
+
+		// --------------------------------------
+		// Keywords - Alif
+		// --------------------------------------
+
+		// ألف أضف C++ رئيسية ـسـ  واجهة خاص نهاية كلما نافذة دالة عدد نص كائن إذا و أو سطر رجوع
 		// صنف أداة نقر زر نص ملصق إظهار إخفاء تدمير عنوان نص تجميد عرض محتوى ارتفاع أفصول أرتوب 
 
-		OBJ_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف مكتبة نافذة صنف دالة _س_ واجهة "));
-			OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD, true);
+		obj_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف C++ نافذة صنف دالة _س_ واجهة " + HTML_CSS_JS_Keywords_Bold + CPP_KEY_WORDS_Bold));
+			obj_CODE->StyleSetBold(wxSTC_LUA_WORD, true);
 
-		OBJ_CODE->SetKeyWords(1, wxT(" هدم بناء نقر رئيسية " + CPP_KEY_WORDS));
-			OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD2, false);
+		obj_CODE->SetKeyWords(1, wxT(" هدم بناء نقر رئيسية " + CPP_KEY_WORDS + HTML_CSS_JS_Keywords));
+			obj_CODE->StyleSetBold(wxSTC_LUA_WORD2, false);
 			
-		OBJ_CODE->SetKeyWords(2, wxT(" أداة زر ملصق كلما عدد متغير ثابت منطق نص كائن إذا و أو وإلا نهاية "));
-			OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD3, false);
+		obj_CODE->SetKeyWords(2, wxT(" أداة زر ملصق كلما عدد متغير ثابت منطق نص كائن إذا و أو وإلا نهاية "));
+			obj_CODE->StyleSetBold(wxSTC_LUA_WORD3, false);
 
-		OBJ_CODE->SetKeyWords(3, wxT(" سطر كسر إرجاع صحيح خطأ خاص "));
-			OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD4, false);
+		obj_CODE->SetKeyWords(3, wxT(" سطر كسر إرجاع صحيح خطأ خاص "));
+			obj_CODE->StyleSetBold(wxSTC_LUA_WORD4, false);
 		
-		// For future use..
-		//OBJ_CODE->SetKeyWords(3, wxT(""));
-			//OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD4, false);
-		//OBJ_CODE->SetKeyWords(4, wxT(""));
-			//OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD5, false);
-		//OBJ_CODE->SetKeyWords(5, wxT(""));
-			//OBJ_CODE->StyleSetBold(wxSTC_LUA_WORD6, true);
+		// - For future use -
+		//obj_CODE->SetKeyWords(3, wxT(""));
+			//obj_CODE->StyleSetBold(wxSTC_LUA_WORD4, false);
+		//obj_CODE->SetKeyWords(4, wxT(""));
+			//obj_CODE->StyleSetBold(wxSTC_LUA_WORD5, false);
+		//obj_CODE->SetKeyWords(5, wxT(""));
+			//obj_CODE->StyleSetBold(wxSTC_LUA_WORD6, true);
 		
 		// ---------------------------
 		// Drag And Drop Alif files
 		// ---------------------------
 		
-		//OBJ_CODE->DragAcceptFiles(true);
-		//OBJ_CODE->Connect(wxEVT_DROP_FILES, wxDropFilesEventHandler(CLASS_WINDOW_MAIN::CODE_DROP), NULL, this);
+		//obj_CODE->DragAcceptFiles(true);
+		//obj_CODE->Connect(wxEVT_DROP_FILES, wxDropFilesEventHandler(Window_Main::CODE_DROP), NULL, this);
 
 		// ---------------------------
 		// Error Style
 		// ---------------------------
 
-		OBJ_CODE->IndicatorSetStyle(ID_CODE_ERROR_INDICATOR, wxSTC_INDIC_TT);
-		OBJ_CODE->IndicatorSetForeground(ID_CODE_ERROR_INDICATOR, wxColour(197,107,116));
+		obj_CODE->IndicatorSetStyle(ID_CODE_ERROR_INDICATOR, wxSTC_INDIC_TT);
+		obj_CODE->IndicatorSetForeground(ID_CODE_ERROR_INDICATOR, wxColour(Color_ERROR));
+
+		// Line number
+		obj_CODE->SetMarginWidth (MARGIN_LINE_NUMBERS, 50);
+		obj_CODE->StyleSetForeground (wxSTC_STYLE_LINENUMBER, wxColour (Color_LINENUMBER_FG));
+		obj_CODE->StyleSetBackground (wxSTC_STYLE_LINENUMBER, wxColour (Color_LINENUMBER_BG));
+		obj_CODE->SetMarginType (MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
 		
 		// ---------------------------
 		// Line end
@@ -1783,11 +1967,11 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 		// wxSTC_EOL_CRLF (Windows), wxSTC_EOL_CR (Macintosh) and wxSTC_EOL_LF (Linux).
 		
 		#ifdef _WIN32
-			OBJ_CODE->SetEOLMode(wxSTC_EOL_LF);
+			obj_CODE->SetEOLMode(wxSTC_EOL_LF);
 		#elif  __APPLE__
-			OBJ_CODE->SetEOLMode(wxSTC_EOL_LF);
+			obj_CODE->SetEOLMode(wxSTC_EOL_LF);
 		#else
-			OBJ_CODE->SetEOLMode(wxSTC_EOL_LF);
+			obj_CODE->SetEOLMode(wxSTC_EOL_LF);
 		#endif
 
 	#endif
@@ -1861,30 +2045,6 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 	OBJ_LOG->SetMargins(20, 20);
 	
 	// -------------------------
-	// Splinting
-	// -------------------------
-	
-	//OBJ_MAIN_SPLITTER->SetSashGravity(0.5);
-	//OBJ_MAIN_SPLITTER->SetMinimumPaneSize(50); // Smalest size the
-	//OBJ_MAIN_SIZER->Add(OBJ_MAIN_SPLITTER, 1, wxEXPAND|wxALL, 0);
-	//OBJ_CODE_SIZER->Add(OBJ_CODE, 1, wxEXPAND|wxALL, 0);
-	//OBJ_PANEL_1->SetSizer(OBJ_CODE_SIZER);
-	//OBJ_LOG_SIZER->Add(OBJ_LOG, 1, wxEXPAND|wxALL, 0);
-	//OBJ_PANEL_2->SetSizer(OBJ_LOG_SIZER);
-	//OBJ_MAIN_SPLITTER->SplitHorizontally(OBJ_PANEL_1, OBJ_PANEL_2);
-	//this->SetSizer(OBJ_MAIN_SIZER);
-	//OBJ_MAIN_SIZER->SetSizeHints(this);
-	//OBJ_MAIN_SPLITTER->SetSashPosition(1000);
-	
-	// -------------------------
-	// Window Style
-	// -------------------------
-	
-	//OBJ_CLASS_WINDOW_MAIN->SetBackgroundColour(wxColour(* wxYELLOW));
-	//OBJ_PANEL_1->SetBackgroundColour(wxColour(239, 241, 245));
-	//OBJ_PANEL_2->SetBackgroundColour(wxColour(244, 244, 244));
-	
-	// -------------------------
 	// Tree
 	// -------------------------
 	
@@ -1920,6 +2080,21 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 	TREE_WINDOW_TOTAL_ITEM = 0;
 	
 	// -------------------------
+	// WebUI (Webview)
+	// -------------------------
+	
+	obj_WebUI = wxWebView::New(	this, wxID_ANY, "", wxPoint(0,0), wxSize(500, 500), 
+								wxWebViewBackendDefault, 
+								wxBORDER_NONE, wxT("Alif App"));
+
+	obj_WebUI->SetEditable(false);
+	obj_WebUI->EnableContextMenu(false);
+	obj_WebUI->EnableHistory(false);
+	obj_WebUI->Enable(false);
+
+	//Bind( wxEVT_LEFT_DOWN, &Window_Main::OnMouseLeftDown, this, UI_ID );
+
+	// -------------------------
 	// wxAUI Add Widgets
 	// -------------------------
 	
@@ -1929,33 +2104,38 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 
 	#ifdef _WIN32
 
-		AUI_MANAGER.AddPane(OBJ_CODE, //wxCENTER);
+		// Code
+		AUI_MANAGER.AddPane(obj_CODE, 
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		// Files
+		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		// UI
+		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// WUI
+		AUI_MANAGER.AddPane(obj_WebUI,
+		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ويب ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(500,500).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Controls
+		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, 
 		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Propreties
+		AUI_MANAGER.AddPane(OBJ_PROPERTIES, 
 		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Log
+		AUI_MANAGER.AddPane(OBJ_LOG, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
-		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
+		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom());
 
 	#elif  __APPLE__
 
-		AUI_MANAGER.AddPane(OBJ_CODE, //wxCENTER);
+		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
 		
@@ -1981,7 +2161,7 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 
 	#else
 
-		AUI_MANAGER.AddPane(OBJ_CODE, //wxCENTER);
+		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
 		
@@ -2011,7 +2191,7 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 	// wxAUI Update
 	// -------------------------
 
-	 AUI_MANAGER.Update();
+	AUI_MANAGER.Update();
 
 	// -------------------------
 	// UI Initilizing
@@ -2019,13 +2199,13 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 
 	UI_BUTTON_SAVE(false);
 	UI_BUTTON_BUILD(false);
-	#ifdef ALIF_STUDIO_NO_STC
-		OBJ_CODE->Clear();
+	#ifdef AlifStudio_DisableSTC
+		obj_CODE->Clear();
 	#else
-		OBJ_CODE->ClearAll();
+		obj_CODE->ClearAll();
 	#endif
-	OBJ_CODE->Enable(false);
-	OBJ_CODE->SetEditable(false);
+	obj_CODE->Enable(false);
+	obj_CODE->SetEditable(false);
 	OBJ_LOG->Clear();
 
 	FIND_WORD = wxT("");
@@ -2058,10 +2238,10 @@ CLASS_WINDOW_MAIN :: CLASS_WINDOW_MAIN() :
 }
 
 // ------------------------------------------------
-// UI Window Constructeur
+// UI Window Constructor
 // ------------------------------------------------
 
-UI_CLASS_WINDOW :: UI_CLASS_WINDOW(wxString CAPTION, wxPoint pos, wxSize size) : 
+Window_UI :: Window_UI(wxString CAPTION, wxPoint pos, wxSize size) : 
 	wxDialog(NULL, ID_UI_WINDOW, CAPTION, pos, size, 
 	#ifdef _WIN32
 		wxCAPTION | wxRESIZE_BORDER)
@@ -2077,15 +2257,11 @@ UI_CLASS_WINDOW :: UI_CLASS_WINDOW(wxString CAPTION, wxPoint pos, wxSize size) :
 	Centre();
 }
 
-// ****************************************************************************
-// ** Destructeur ****************************************************************
-// ****************************************************************************
-
 // ------------------------------------------------
-// Window Main Destructeur
+// Window Main Destructor
 // ------------------------------------------------
 
-CLASS_WINDOW_MAIN::~CLASS_WINDOW_MAIN()
+Window_Main::~Window_Main()
 {
 	// after execution of OnClose()
 	// deinitialize the frame manager
@@ -2093,97 +2269,34 @@ CLASS_WINDOW_MAIN::~CLASS_WINDOW_MAIN()
 }
 
 // ------------------------------------------------
-// UI Window Destructeur
+// UI Window Destructor
 // ------------------------------------------------
 
-UI_CLASS_WINDOW::~UI_CLASS_WINDOW()
+Window_UI::~Window_UI()
 {
 	// ...
 }
 
-// ****************************************************************************
-// ** Application *************************************************************
-// ****************************************************************************
-
 // ------------------------------------------------
-// Application Class
+// Application
 // ------------------------------------------------
 
-// Toute application wxWidgets doit normalement posséder une classe dérivée de wxApp
-// Déclaration de notre classe dérivée de wxApp
-
-class MyApp : public wxApp
-{
+class MyApp : public wxApp{
     public:
-	
-		// ------------------------------------------------
-		// Application Class Constructeur
-		// ------------------------------------------------
-		
         MyApp();
-		
-		// ------------------------------------------------
-		// Application Class Destructeur
-		// ------------------------------------------------
-		
 		~MyApp();
-		
-		// ------------------------------------------------
-		// Application Class Initialization
-		// ------------------------------------------------
-		
 		virtual bool OnInit();
-		
-		// ------------------------------------------------
-		// Application Class Exit
-		// ------------------------------------------------
-		
         virtual int OnExit();
-        
 	private:
-		//bool silent_mode;
 		DECLARE_NO_COPY_CLASS(MyApp)
 };
 
-// ------------------------------------------------
-// Set Main Application Class
-// ------------------------------------------------
-
 DECLARE_APP(MyApp);
-
-// ------------------------------------------------
-// Redirect Execution to Main Application Class
-// ------------------------------------------------
-
 IMPLEMENT_APP(MyApp);
 
-// ------------------------------------------------
-// Application Class Constructeur
-// ------------------------------------------------
-
-MyApp::MyApp()
-{
-	//wxMessageBox(wxT("app Constructeur"));
-}
-
-// ------------------------------------------------
-// Application Class Destructeur
-// ------------------------------------------------
-
-MyApp::~MyApp()
-{
-	//wxMessageBox(wxT("app Destructeur"));
-}
-
-// ------------------------------------------------
-// Application Class Exit
-// ------------------------------------------------
-
-int MyApp::OnExit()
-{
-	//wxMessageBox(wxT("app exite"));
-	return 0;
-}
+MyApp::MyApp(){}
+MyApp::~MyApp(){}
+int MyApp::OnExit(){return 0;}
 
 // ------------------------------------------------
 // Trim
@@ -2195,16 +2308,17 @@ wxString TRIM(wxString STR)
 	return STR.Trim(true);
 }
 
-void AUI_GUI_DESIGNER(bool SHOW)
-{
-	// wxAUI Hide GUI Panels
+void UI_DesignerShow(bool DesignerShow, bool WebUIShow){
+
+	// Hide or show Designer / WebUI
 
 	wxAuiPaneInfo& PI_Window = AUI_MANAGER.GetPane(OBJ_TREE_WINDOW);
 	wxAuiPaneInfo& PI_Control = AUI_MANAGER.GetPane(OBJ_TREE_CONTROLS);
 	wxAuiPaneInfo& PI_Prop = AUI_MANAGER.GetPane(OBJ_PROPERTIES);
+	wxAuiPaneInfo& PI_WebUI = AUI_MANAGER.GetPane(obj_WebUI);
 
-	if (SHOW)
-	{
+	if (DesignerShow){
+
 		if (PI_Window.IsOk())
 			PI_Window.Show();
 
@@ -2213,8 +2327,6 @@ void AUI_GUI_DESIGNER(bool SHOW)
 
 		if (PI_Prop.IsOk())
 			PI_Prop.Show();
-
-		AUI_MANAGER.Update();
 	}
 	else
 	{
@@ -2226,9 +2338,22 @@ void AUI_GUI_DESIGNER(bool SHOW)
 
 		if (PI_Prop.IsOk() && PI_Prop.IsShown())
 			PI_Prop.Hide();
-
-		AUI_MANAGER.Update();
 	}
+
+	if (WebUIShow){
+
+		if (PI_WebUI.IsOk())
+			PI_WebUI.Show();
+
+	} 
+	else 
+	{
+
+		if (PI_WebUI.IsOk() && PI_WebUI.IsShown())
+			PI_WebUI.Hide();
+	}
+
+	AUI_MANAGER.Update();
 }
 
 // ------------------------------------------------
@@ -2237,15 +2362,6 @@ void AUI_GUI_DESIGNER(bool SHOW)
 
 bool MyApp::OnInit()
 {
-	// ------------------------------------------------
-	// Application Class IF Failure
-	// ------------------------------------------------
-	
-	// to ignore wx auto command arguments Parser 
-	// wxCmdLineParser()
-
-	//if (!wxApp::OnInit())
-		//return false;
 
 	// -------------------------
 	// ARGv
@@ -2293,7 +2409,7 @@ bool MyApp::OnInit()
 		//									 -->\bin\gcc.exe
 		//									 -->\include\wx\wx.h
 		//									 -->\lib\libwxmsw31u_alif_lib_core
-		//									 -->\aliflib\msg.aliflib
+		//									 -->\alifc\msg.alifc
 
 		// 'C:\Program Files (x86)\Alif Studio\alifstudio.exe'
 		wxFileName fname( ::wxStandardPaths::Get().GetExecutablePath() );
@@ -2342,7 +2458,7 @@ bool MyApp::OnInit()
 				{
 					LINE = TRIM(LINE);
 
-					ALIF_VERSION = LINE;
+					Alif_Compiler_Version = LINE;
 					break;
 				}
 			}
@@ -2370,7 +2486,7 @@ bool MyApp::OnInit()
 		
 		// alif_1.0-1.pkg
 		//		/usr/local/bin/alif
-		//		/Library/Application Support/Aliflang/Alif_Compiler/aliflib/aliflib.inf
+		//		/Library/Application Support/Aliflang/Alif_Compiler/alifc/alifc.inf
 		//		/Library/Application Support/Aliflang/Alif_Compiler/mac_alif_version.inf
 		//		/Library/Application Support/Aliflang/Alif_Compiler/Alif_Arabic_Programming_Language
 		//		/Library/Application Support/Aliflang/Alif_Compiler/alif.icns
@@ -2434,7 +2550,7 @@ bool MyApp::OnInit()
 				{
 					LINE = TRIM(LINE);
 
-					ALIF_VERSION = LINE;
+					Alif_Compiler_Version = LINE;
 					break;
 				}
 			}
@@ -2473,7 +2589,7 @@ bool MyApp::OnInit()
 
 		// aliflang_1.0-1.deb
 		//		/usr/local/bin/alif.bin
-		//		/usr/local/lib/aliflib/risalah.aliflib
+		//		/usr/local/lib/alifc/risalah.alifc
 		//		/usr/local/share/aliflang/copyright
 		//		/usr/local/share/aliflang/linux_alif_version.inf
 		//		/usr/local/share/aliflang/Alif_Arabic_Programming_Language
@@ -2540,7 +2656,7 @@ bool MyApp::OnInit()
 				{
 					LINE = TRIM(LINE);
 
-					ALIF_VERSION = LINE;
+					Alif_Compiler_Version = LINE;
 					break;
 				}
 			}
@@ -2650,13 +2766,13 @@ bool MyApp::OnInit()
 	}
 
 	// ------------------------------------------------
-	// Update Updater
+	// If new Updater
 	// ------------------------------------------------
 
-	if (wxFileName::FileExists(NEW_UPDATER_PATH))
-	{
-		if (wxRemoveFile(PATH_FULL_UPDATE))
-		{
+	if (wxFileName::FileExists(NEW_UPDATER_PATH)){
+
+		if (wxRemoveFile(PATH_FULL_UPDATE)){
+
 			wxRenameFile(NEW_UPDATER_PATH, PATH_FULL_UPDATE);
 		}
 	}
@@ -2669,16 +2785,16 @@ bool MyApp::OnInit()
 	{
 		wxMessageBox(wxT(" مترجم ألف غير موجود \n \n ") + 
 					PATH_FULL_ALIF_COMPILER + 
-					wxT(" \n \n المرجو اعادت ثتبيت البرنامج \n او تحميله من الموقع الرسمي \n \n www.aliflang.org"), wxT("ألف ستوديو ") + ALIF_STUDIO_VERSION);
+					wxT(" \n \n المرجو اعادت ثتبيت البرنامج \n او تحميله من الموقع الرسمي \n \n www.aliflang.org"), wxT("ألف ستوديو ") + Alif_Studio_Version);
 		
 		return false; // Exit
 	}
 	
 	// ------------------------------------------------
-	// Application Class -> Widget Constructeur
+	// Application Class -> Widget Constructor
 	// ------------------------------------------------
 	
-	OBJ_CLASS_WINDOW_MAIN = new CLASS_WINDOW_MAIN();
+	OBJ_CLASS_WINDOW_MAIN = new Window_Main();
 	
 	#ifdef _WIN32
 		OBJ_CLASS_WINDOW_MAIN->SetLayoutDirection(wxLayout_RightToLeft);
@@ -2704,37 +2820,33 @@ bool MyApp::OnInit()
 	}
 	else
 	{
-		// Hide Aui Designer Panels
-		AUI_GUI_DESIGNER(false);
+		// Hide Aui Designer Panels / UI Web
+		UI_DesignerShow(false, false);
 	}
 	
 	// ------------------------------------------------
     return true;
 }
 
-// ****************************************************************************
-// ** Class Functions *********************************************************
-// ****************************************************************************
-
 // ------------------------------------------------
 // UI Window Close
 // ------------------------------------------------
 
-void UI_CLASS_WINDOW::OnClose(wxCloseEvent& event)
+void Window_UI::OnClose(wxCloseEvent& event)
 {
 	event.Skip();
 }
 
 // -------------------------------
 
-void UI_CLASS_WINDOW::OnNavigationKey(wxNavigationKeyEvent& event)
+void Window_UI::OnNavigationKey(wxNavigationKeyEvent& event)
 {
 	event.Skip(false); // To disable Tab key.
 }
 
 // -------------------------------
 
-void UI_CLASS_WINDOW::OnResize(wxSizeEvent& event)
+void Window_UI::OnResize(wxSizeEvent& event)
 {
 	event.Skip();
 	
@@ -2753,7 +2865,7 @@ void UI_CLASS_WINDOW::OnResize(wxSizeEvent& event)
 // Window Main Close
 // ------------------------------------------------
 
-void CLASS_WINDOW_MAIN::OnClose(wxCloseEvent& event)
+void Window_Main::OnClose(wxCloseEvent& event)
 {
 	event.Skip(false);
 	Exit();
@@ -2761,7 +2873,7 @@ void CLASS_WINDOW_MAIN::OnClose(wxCloseEvent& event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::OnCloseMenu(wxCommandEvent& event)
+void Window_Main::OnCloseMenu(wxCommandEvent& event)
 {
 	event.Skip(false);
 	Exit();
@@ -2769,7 +2881,7 @@ void CLASS_WINDOW_MAIN::OnCloseMenu(wxCommandEvent& event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::TREE_CONTROLES_DCLICK(wxTreeEvent& event)
+void Window_Main::TREE_CONTROLES_DCLICK(wxTreeEvent& event)
 {
 	event.Skip();
 
@@ -2803,7 +2915,7 @@ void CLASS_WINDOW_MAIN::TREE_CONTROLES_DCLICK(wxTreeEvent& event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::TREE_WINDOW_RCLICK(wxTreeEvent& event)
+void Window_Main::TREE_WINDOW_RCLICK(wxTreeEvent& event)
 {
 	event.Skip();
 	
@@ -2824,7 +2936,7 @@ void CLASS_WINDOW_MAIN::TREE_WINDOW_RCLICK(wxTreeEvent& event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::TREE_WINDOW_DCLICK(wxTreeEvent& event)
+void Window_Main::TREE_WINDOW_DCLICK(wxTreeEvent& event)
 {
 	event.Skip();
 	
@@ -2869,7 +2981,7 @@ void CLASS_WINDOW_MAIN::TREE_WINDOW_DCLICK(wxTreeEvent& event)
 			WINDOW_RESIZING_BY_SYSTEM = true;	// To ignore resize event set by system
 			FIRST_GENERATED_CODE = true;		// To ignore user-save code when generating first code
 			
-			OBJ_UI_CLASS_WINDOW = new UI_CLASS_WINDOW(UI_WINDOW_CAPTION[i], wxPoint(UI_WINDOW_X[i], UI_WINDOW_Y[i]), wxSize(UI_WINDOW_W[i], UI_WINDOW_H[i]));
+			OBJ_UI_CLASS_WINDOW = new Window_UI(UI_WINDOW_CAPTION[i], wxPoint(UI_WINDOW_X[i], UI_WINDOW_Y[i]), wxSize(UI_WINDOW_W[i], UI_WINDOW_H[i]));
 			
 			OBJ_WINDOW_BASE_PANEL = new DrawPanel((wxDialog*) OBJ_UI_CLASS_WINDOW);
 			
@@ -2943,7 +3055,7 @@ void CLASS_WINDOW_MAIN::TREE_WINDOW_DCLICK(wxTreeEvent& event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::TREE_FILES_DCLICK(wxTreeEvent& event)
+void Window_Main::TREE_FILES_DCLICK(wxTreeEvent& event)
 {
 	event.Skip();
 	
@@ -2954,17 +3066,17 @@ void CLASS_WINDOW_MAIN::TREE_FILES_DCLICK(wxTreeEvent& event)
 	if (TREE_SELECTED_ID == OBJ_TREE_FILES_LIST->GetRootItem())
 		return;
 	
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		if (CODE_MODIFIED)
 	#else
-		if (OBJ_CODE->IsModified())
+		if (obj_CODE->IsModified())
 	#endif
 	{
 		int answer = wxMessageBox(wxT("لقد غيرت محتوى الملف، هل تود حفظ الملف ؟"), wxT("خروج"), wxYES_NO | wxCANCEL, OBJ_CLASS_WINDOW_MAIN);
 		if (answer == wxYES)
 		{
 			// Save
-			if (!SAVE_FILE_UTF8(OBJ_CODE->GetValue(), PATH_FULL_SOURCE, true))
+			if (!SAVE_FILE_UTF8(obj_CODE->GetValue(), PATH_FULL_SOURCE, true))
 			{
 				wxMessageBox(wxT("لم تنجح عملية تسجيل الملف \nحاول مع ملف باسم فيه حروف إنجليزية فقط"), wxT("خطأ"), wxICON_WARNING);
 				return;
@@ -3004,30 +3116,30 @@ void CLASS_WINDOW_MAIN::TREE_FILES_DCLICK(wxTreeEvent& event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::CODE_LTR(wxCommandEvent &event)
+void Window_Main::CODE_LTR(wxCommandEvent &event)
 {
 	event.Skip();
-	OBJ_CODE->SetLayoutDirection (wxLayout_LeftToRight);
+	obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::CODE_RTL(wxCommandEvent &event)
+void Window_Main::CODE_RTL(wxCommandEvent &event)
 {
 	event.Skip();
-	OBJ_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+	obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
 }
 
 // -------------------------------
 /*
-void CLASS_WINDOW_MAIN::CODE_DROP(wxDropFilesEvent& event)
+void Window_Main::CODE_DROP(wxDropFilesEvent& event)
 {
 	wxMessageBox("DROP");
 }
 */
 // -------------------------------
 /*
-void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
+void Window_Main::CODE_CHANGE(wxStyledTextEvent& event)
 {
 	event.Skip(true);
 
@@ -3040,59 +3152,37 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 */
 // -------------------------------
 
-#ifndef ALIF_STUDIO_NO_STC
+#ifndef AlifStudio_DisableSTC
+
+	// Using STC (Windows / Linux)
 
 	bool IS_INSIDE_WORD = true;
 
-	void CLASS_WINDOW_MAIN::CODE_AUTOCOMP_COMPLETED(wxStyledTextEvent& event)
+	void Window_Main::CODE_AUTOCOMP_COMPLETED(wxStyledTextEvent& event)
 	{
 		event.Skip();
 
-		#ifdef ALIF_STUDIO_NO_STC
-			OBJ_CODE->AppendText(" ");
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->AppendText(" ");
 		#else
-			OBJ_CODE->AddText(" ");
+			obj_CODE->AddText(" ");
 		#endif
 		
 		IS_INSIDE_WORD = false; // Allow Auto Complete
 	}
 
-#endif
-
-// -------------------------------
-
-#ifdef ALIF_STUDIO_NO_STC
-
-	void CLASS_WINDOW_MAIN::CODE_KEYDOWN(wxKeyEvent& event) // wxKeyEventHandler
-	{
+	void Window_Main::CODE_CHARADDED(wxStyledTextEvent& event){
 		event.Skip();
 
-		// macOS
+		if (CURRENT_FILE_EXTENSION == "ALIFUIW"){
 
-		if (!PATH_FULL_SOURCE.IsEmpty())
-			CODE_MODIFIED = true;
-		
-		// Pasring UI Code source
-		if (CURRENT_FILE_EXTENSION == "ALIFUI")
-			// TODO: 'Del' and 'Space' events dont run when editing UI code source!
-			UI_PARSE_SOURCE();
-	}
-
-#endif
-
-// -------------------------------
-
-#ifndef ALIF_STUDIO_NO_STC
-
-	//bool LAST_IS_OPERATOR = false;
-
-	void CLASS_WINDOW_MAIN::CODE_CHARADDED(wxStyledTextEvent& event)
-	{
-		event.Skip();
-
-		// Pasring UI Code source
-		if (CURRENT_FILE_EXTENSION == "ALIFUI")
+			// Pasring UI Web Code source
+			obj_WebUI->SetPage(obj_CODE->GetValue(), "");
+			return;
+		}
+		else if (CURRENT_FILE_EXTENSION == "ALIFUI")
 		{
+			// Pasring UI Code source
 			// TODO: 'Del' and 'Space' events dont run when editing UI code source!
 			
 			UI_PARSE_SOURCE();
@@ -3103,7 +3193,7 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 
 		if (CODE_ERROR_INDICATOR)
 		{
-			unsigned int TOTAL_LINES = (OBJ_CODE->GetLineCount()) - 1; // First line is 0
+			unsigned int TOTAL_LINES = (obj_CODE->GetLineCount()) - 1; // First line is 0
 
 			int endPsn = 0;
 			int startPsn = 0;
@@ -3111,14 +3201,14 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 
 			for (unsigned int LINE_NUMBER = 0; LINE_NUMBER <= TOTAL_LINES; LINE_NUMBER++)
 			{
-				endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-				startPsn = OBJ_CODE->PositionFromLine(LINE_NUMBER);
+				endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+				startPsn = obj_CODE->PositionFromLine(LINE_NUMBER);
 				len = endPsn - startPsn;
 
-				OBJ_CODE->IndicatorClearRange(startPsn, len);
+				obj_CODE->IndicatorClearRange(startPsn, len);
 			}
 
-			OBJ_CODE->MarkerDeleteAll(1);
+			obj_CODE->MarkerDeleteAll(1);
 
 			CODE_ERROR_INDICATOR = false;
 		}
@@ -3148,7 +3238,7 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 		// Fix Show-Hide liste in the same seconde
 		// by igiore show in some case.
 
-		OBJ_CODE->AutoCompCancel(); // Clear AutoComList
+		obj_CODE->AutoCompCancel(); // Clear AutoComList
 
 		int CODE_CHAR_ASCII = event.GetKey();
 		
@@ -3166,7 +3256,7 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 			return;
 		}
 
-		if (OBJ_CODE->GetLineLength(OBJ_CODE->GetCurrentLine()) < 2) // Empty Line
+		if (obj_CODE->GetLineLength(obj_CODE->GetCurrentLine()) < 2) // Empty Line
 			IS_INSIDE_WORD = false;
 
 		if (IS_INSIDE_WORD)
@@ -3183,13 +3273,13 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 		//wxStyledTextCtrl* stc = (wxStyledTextCtrl*)event.GetEventObject();
 
 		// Find the word start
-		int currentPos = OBJ_CODE->GetCurrentPos();
+		int currentPos = obj_CODE->GetCurrentPos();
 		// Find the current pos
-		int wordStartPos = OBJ_CODE->WordStartPosition(currentPos, true);
+		int wordStartPos = obj_CODE->WordStartPosition(currentPos, true);
 		
 		// hum..
-		//OBJ_CODE->AutoCompSetAutoHide(true);
-		//OBJ_CODE->AutoCompSetCancelAtStart(false);
+		//obj_CODE->AutoCompSetAutoHide(true);
+		//obj_CODE->AutoCompSetCancelAtStart(false);
 		
 		// Display the autocompletion list
 		int lenEntered = currentPos - wordStartPos;
@@ -3218,115 +3308,139 @@ void CLASS_WINDOW_MAIN::CODE_CHANGE(wxStyledTextEvent& event)
 			// 1579 ث
 			// 1591 ط
 
-			OBJ_CODE->AutoCompSetAutoHide(true);
-			OBJ_CODE->AutoCompSetCancelAtStart(true); // Clear AutoList if Backspace pressed
+			obj_CODE->AutoCompSetAutoHide(true);
+			obj_CODE->AutoCompSetCancelAtStart(true); // Clear AutoList if Backspace pressed
 
 			if (CODE_CHAR_ASCII == 1593) // ع
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("عدد"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("عدد"));
 			}
 			else if (CODE_CHAR_ASCII == 1583) // د
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("دالة"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("دالة"));
 			}
 			else if (CODE_CHAR_ASCII == 1606) // ن
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("نهاية نافذة نقر نص"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("نهاية نافذة نقر نص"));
 			}
 			else if (CODE_CHAR_ASCII == 1605) // م
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("مكتبة منطق متغير ملصق"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("C++ منطق متغير ملصق"));
 			}
 			else if (CODE_CHAR_ASCII == 1608) // و
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("وإلا و واجهة"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("وإلا و واجهة"));
 			}
 			else if (CODE_CHAR_ASCII == 1585) // ر
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("رئيسية"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("رئيسية"));
 			}
 			else if (CODE_CHAR_ASCII == 1589) // ص
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("صنف صحيح"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("صنف صحيح"));
 			}
 			else if (CODE_CHAR_ASCII == 1582) // خ
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("خاص خطأ"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("خاص خطأ"));
 			}
 			else if (CODE_CHAR_ASCII == 1581) // ح
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("نص"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("نص"));
 			}
 			else if (CODE_CHAR_ASCII == 1603) // ك
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("كلما كائن"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("كلما كائن"));
 			}
 			else if (CODE_CHAR_ASCII == 1607) // ه
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("هدم"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("هدم"));
 			}
 			else if (CODE_CHAR_ASCII == 1576) // ب
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("بناء"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("بناء"));
 			}
 			else if (CODE_CHAR_ASCII == 1587) // س
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("سطر"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("سطر"));
 			}
 			else if (CODE_CHAR_ASCII == 1586) // ز
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("زر"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("زر"));
 			}
 			else if (CODE_CHAR_ASCII == 1578 || // ت
 					 CODE_CHAR_ASCII == 1579)   // ث
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("ثابت"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("ثابت"));
 			}
 			else if (CODE_CHAR_ASCII == 1591) // ط
 			{
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("طرفية"));
+				obj_CODE->AutoCompShow(lenEntered, wxT("طرفية"));
 			}
 			else if (CODE_CHAR_ASCII == 1573 || // إ
 					 CODE_CHAR_ASCII == 1571 || // أ
 					 CODE_CHAR_ASCII == 1575) 	// ا
 			{
 				//const wxString& S = wxT("إ");
-				//OBJ_CODE->AutoCompSelect(S); // CRASH !
+				//obj_CODE->AutoCompSelect(S); // CRASH !
 				
-				OBJ_CODE->AutoCompSetAutoHide(false);
-				OBJ_CODE->AutoCompShow(lenEntered, wxT("إذا أو ألف إرجاع أضف أداة"));
+				obj_CODE->AutoCompSetAutoHide(false);
+				obj_CODE->AutoCompShow(lenEntered, wxT("إذا أو ألف إرجاع أضف أداة"));
 			}
 			else
-			 OBJ_CODE->AutoCompCancel();
+			 obj_CODE->AutoCompCancel();
 
 			//if (LAST_IS_OPERATOR) // :
-				//OBJ_CODE->AutoCompShow(lenEntered, wxT("إظهار  إخفاء تدمير عنوان تجميد"));
+				//obj_CODE->AutoCompShow(lenEntered, wxT("إظهار  إخفاء تدمير عنوان تجميد"));
 			//else
-				//OBJ_CODE->AutoCompShow(lenEntered, wxT("رئيسية  كلما نافذة   نص  منطق صحيح خطأ إذا و أو وإلا سطر رجوع صنف كائن خاص"));
+				//obj_CODE->AutoCompShow(lenEntered, wxT("رئيسية  كلما نافذة   نص  منطق صحيح خطأ إذا و أو وإلا سطر رجوع صنف كائن خاص"));
 		}
 
 		IS_INSIDE_WORD = true;
 		//LAST_IS_OPERATOR = false;
 	}
 
+#else
+
+	// Using wxTextCtrl (macOS)
+
+	void Window_Main::CODE_KEYDOWN(wxKeyEvent& event) // wxKeyEventHandler
+	{
+		event.Skip();
+
+		// macOS
+
+		if (!PATH_FULL_SOURCE.IsEmpty())
+			CODE_MODIFIED = true;
+		
+		if (CURRENT_FILE_EXTENSION == "ALIFUIW"){
+
+			// Pasring UI Web Code source
+			obj_WebUI->SetPage(obj_CODE->GetValue(), "");
+			return;
+		}
+		else if (CURRENT_FILE_EXTENSION == "ALIFUI")
+			// TODO: 'Del' and 'Space' events dont run when editing UI code source!
+			UI_PARSE_SOURCE();
+	}
+
 #endif
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::OnSave(wxCommandEvent &event)
+void Window_Main::OnSave(wxCommandEvent &event)
 {
 	event.Skip();
 	
-    //OBJ_CODE->SaveFile(PATH_FULL_SOURCE); // Not working for UTF8 inwx 3.1 Beta
+    //obj_CODE->SaveFile(PATH_FULL_SOURCE); // Not working for UTF8 inwx 3.1 Beta
 	
 	if (!PATH_FULL_SOURCE.IsEmpty())
 	{
-		if (SAVE_FILE_UTF8(OBJ_CODE->GetValue(), PATH_FULL_SOURCE, true))
+		if (SAVE_FILE_UTF8(obj_CODE->GetValue(), PATH_FULL_SOURCE, true))
 		{
-			#ifdef ALIF_STUDIO_NO_STC
+			#ifdef AlifStudio_DisableSTC
 				CODE_MODIFIED = false;
 			#else
-				OBJ_CODE->SetSavePoint();
+				obj_CODE->SetSavePoint();
 			#endif
 		}
 		else
@@ -3339,7 +3453,7 @@ void CLASS_WINDOW_MAIN::OnSave(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::OnSaveAs(wxCommandEvent &event)
+void Window_Main::OnSaveAs(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -3349,15 +3463,23 @@ void CLASS_WINDOW_MAIN::OnSaveAs(wxCommandEvent &event)
 	if (CURRENT_FILE_EXTENSION == "ALIFUI")
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifui", 
-		wxT("واجهة  ( * . alifui )|*.alifui|ألف  ( * . alif )|*.alif|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
+		wxT("واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
 	}
-	else if (CURRENT_FILE_EXTENSION == "ALIFLIB")
+	else if (CURRENT_FILE_EXTENSION == "ALIFUIW")
 	{
-		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".aliflib", 
-		wxT("مكتبة  ( * . aliflib )|*.aliflib|واجهة  ( * . alifui )|*.alifui|ألف  ( * . alif )|*.alif"), wxFD_SAVE);
+		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifuiw", 
+		wxT("واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
+
+		response = saveDialog->ShowModal();
+		Path = saveDialog->GetPath();
+	}
+	else if (CURRENT_FILE_EXTENSION == "ALIFC")
+	{
+		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifc", 
+		wxT("C++  ( * . alifc )|*.alifc|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
@@ -3365,7 +3487,7 @@ void CLASS_WINDOW_MAIN::OnSaveAs(wxCommandEvent &event)
 	else
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alif", 
-		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
+		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
@@ -3373,12 +3495,12 @@ void CLASS_WINDOW_MAIN::OnSaveAs(wxCommandEvent &event)
 	
     if (response == wxID_OK)
 	{
-		if (SAVE_FILE_UTF8(OBJ_CODE->GetValue(), Path, false))
+		if (SAVE_FILE_UTF8(obj_CODE->GetValue(), Path, false))
 		{
-			#ifdef ALIF_STUDIO_NO_STC
+			#ifdef AlifStudio_DisableSTC
 				CODE_MODIFIED = false;
 			#else
-				OBJ_CODE->SetSavePoint();
+				obj_CODE->SetSavePoint();
 			#endif
 
 			wxFileName fn ( Path );
@@ -3386,8 +3508,10 @@ void CLASS_WINDOW_MAIN::OnSaveAs(wxCommandEvent &event)
 				CURRENT_FILE_EXTENSION = "ALIF";
 			else if (fn.GetExt() == "alifui")
 				CURRENT_FILE_EXTENSION = "ALIFUI";
-			else if (fn.GetExt() == "aliflib")
-				CURRENT_FILE_EXTENSION = "ALIFLIB";
+			else if (fn.GetExt() == "alifuiw")
+				CURRENT_FILE_EXTENSION = "ALIFUIW";
+			else if (fn.GetExt() == "ALIFC")
+				CURRENT_FILE_EXTENSION = "ALIFC";
 			else
 			{
 				wxMessageBox("امتداد الملف غير معروف - " + fn.GetExt(), wxT("خطأ"), wxICON_WARNING);
@@ -3427,69 +3551,69 @@ void CLASS_WINDOW_MAIN::OnSaveAs(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::EDIT_UNDO(wxCommandEvent &event)
+void Window_Main::EDIT_UNDO(wxCommandEvent &event)
 {
 	event.Skip();
 
-	OBJ_CODE->Undo();
+	obj_CODE->Undo();
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::EDIT_REDO(wxCommandEvent &event)
+void Window_Main::EDIT_REDO(wxCommandEvent &event)
 {
 	event.Skip();
 
-	OBJ_CODE->Redo();
+	obj_CODE->Redo();
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::EDIT_CUT(wxCommandEvent &event)
+void Window_Main::EDIT_CUT(wxCommandEvent &event)
 {
 	event.Skip();
 
-	OBJ_CODE->Cut();
+	obj_CODE->Cut();
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::EDIT_COPY(wxCommandEvent &event)
+void Window_Main::EDIT_COPY(wxCommandEvent &event)
 {
 	event.Skip();
 
-	OBJ_CODE->Copy();
+	obj_CODE->Copy();
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::EDIT_PASTE(wxCommandEvent &event)
+void Window_Main::EDIT_PASTE(wxCommandEvent &event)
 {
 	event.Skip();
 
-	OBJ_CODE->Paste();
+	obj_CODE->Paste();
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::EDIT_DELETE(wxCommandEvent &event)
+void Window_Main::EDIT_DELETE(wxCommandEvent &event)
 {
 	event.Skip();
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		// TODO: There no remove seletion, so get x,y of current selection, and remove it !
 	#else
-		OBJ_CODE->Clear(); // Remove selections
+		obj_CODE->Clear(); // Remove selections
 	#endif
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::FIND(wxCommandEvent &event)
+void Window_Main::FIND(wxCommandEvent &event)
 {
 	event.Skip();
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		wxMessageBox(wxT("بحث - هده الخاصية مازالت تحت التطوير، المرجو تحديث البرنامج عبر الانترنت  من حين لآخر\n\nللمزيد من المعلومات يرجى زيارة الموقع الرسمي : \n\nw w w . a l i f l a n g . o r g"));
 		return;
 	#endif
@@ -3511,10 +3635,10 @@ void CLASS_WINDOW_MAIN::FIND(wxCommandEvent &event)
 
 	FIND_LEN = TXT_TO_SEARCH.Len(); // If i found how to select text, so P to LEN
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		int P = -1; // what about TextStrl ? (for Mac OS)
 	#else
-		int P = OBJ_CODE->FindText(0, OBJ_CODE->GetLastPosition(), TXT_TO_SEARCH); // TODO: FindText() is Win32 API !!! so what about Linux and Mac ?
+		int P = obj_CODE->FindText(0, obj_CODE->GetLastPosition(), TXT_TO_SEARCH); // TODO: FindText() is Win32 API !!! so what about Linux and Mac ?
 	#endif
 
 	if (P > -1)
@@ -3522,13 +3646,13 @@ void CLASS_WINDOW_MAIN::FIND(wxCommandEvent &event)
 		IS_FOUND = true;
 		FIND_LAST_POS = P;
 
-		#ifdef ALIF_STUDIO_NO_STC
+		#ifdef AlifStudio_DisableSTC
 			// No GotoPos for TextCtrl.. so move to RichTextCtrl ??
-			OBJ_CODE->SetInsertionPoint(P);
+			obj_CODE->SetInsertionPoint(P);
 		#else
-			OBJ_CODE->GotoPos(P);
-			OBJ_CODE->SetSelectionStart(P);
-			OBJ_CODE->SetSelectionEnd(P + FIND_LEN);
+			obj_CODE->GotoPos(P);
+			obj_CODE->SetSelectionStart(P);
+			obj_CODE->SetSelectionEnd(P + FIND_LEN);
 		#endif
 	}
 	else
@@ -3541,16 +3665,16 @@ void CLASS_WINDOW_MAIN::FIND(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::FIND_NEXT(wxCommandEvent &event)
+void Window_Main::FIND_NEXT(wxCommandEvent &event)
 {
 	event.Skip();
 
 	if (IS_FOUND)
 	{
-		#ifdef ALIF_STUDIO_NO_STC
+		#ifdef AlifStudio_DisableSTC
 			int P = -1; // what about TextStrl ? (for Mac OS)
 		#else
-			int P = OBJ_CODE->FindText(FIND_LAST_POS + 1, OBJ_CODE->GetLastPosition(), FIND_WORD);
+			int P = obj_CODE->FindText(FIND_LAST_POS + 1, obj_CODE->GetLastPosition(), FIND_WORD);
 		#endif
 
 		if (P > -1)
@@ -3558,13 +3682,13 @@ void CLASS_WINDOW_MAIN::FIND_NEXT(wxCommandEvent &event)
 			IS_FOUND = true;
 			FIND_LAST_POS = P;
 
-			#ifdef ALIF_STUDIO_NO_STC
+			#ifdef AlifStudio_DisableSTC
 				// No GotoPos for TextCtrl.. so move to RichTextCtrl ??
-				OBJ_CODE->SetInsertionPoint(P);
+				obj_CODE->SetInsertionPoint(P);
 			#else
-				OBJ_CODE->GotoPos(P);
-				OBJ_CODE->SetSelectionStart(P);
-				OBJ_CODE->SetSelectionEnd(P + FIND_LEN);
+				obj_CODE->GotoPos(P);
+				obj_CODE->SetSelectionStart(P);
+				obj_CODE->SetSelectionEnd(P + FIND_LEN);
 			#endif
 		}
 		else
@@ -3579,7 +3703,7 @@ void CLASS_WINDOW_MAIN::FIND_NEXT(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::REPLACE(wxCommandEvent &event)
+void Window_Main::REPLACE(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -3588,7 +3712,7 @@ void CLASS_WINDOW_MAIN::REPLACE(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::REPLACE_ALL(wxCommandEvent &event)
+void Window_Main::REPLACE_ALL(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -3599,7 +3723,7 @@ void CLASS_WINDOW_MAIN::REPLACE_ALL(wxCommandEvent &event)
 // Change Binary Path
 // ---------------------
 
-void CLASS_WINDOW_MAIN::SET_BINARY_PATH()
+void Window_Main::SET_BINARY_PATH()
 {
 	#ifdef _WIN32
 	
@@ -3638,14 +3762,14 @@ void CLASS_WINDOW_MAIN::SET_BINARY_PATH()
 // Compile
 // ---------------------
 
-void CLASS_WINDOW_MAIN::COMPILE(wxCommandEvent &event)
+void Window_Main::COMPILE(wxCommandEvent &event)
 {
 	event.Skip();
 
-	CLASS_WINDOW_MAIN::COMPILE_NOW();
+	Window_Main::COMPILE_NOW();
 }
 
-bool CLASS_WINDOW_MAIN::COMPILE_NOW()
+bool Window_Main::COMPILE_NOW()
 {
 	// Check if GCC Path containe space
 	// because GCC, Windres don't work correctly
@@ -3683,7 +3807,7 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 	}
 
 	// Check if there a code..
-	if (OBJ_CODE->IsEmpty())
+	if (obj_CODE->IsEmpty())
 	{
 		wxMessageBox(wxT("لاتوجد شيفرة للترجمة !"), wxT("ترجمة"), wxICON_EXCLAMATION);
 		return false;
@@ -3692,7 +3816,7 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 	// Check if user already chose binary path
 	if(PATH_FULL_EXECUTABLE.IsEmpty())
 	{
-		CLASS_WINDOW_MAIN::SET_BINARY_PATH();
+		Window_Main::SET_BINARY_PATH();
 
 		if(PATH_FULL_EXECUTABLE == "")
 			return false;
@@ -3746,12 +3870,12 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 	// Save File
 	// --------------------------------------
 	
-	if (SAVE_FILE_UTF8( OBJ_CODE->GetValue(), PATH_FULL_SOURCE, true))
+	if (SAVE_FILE_UTF8( obj_CODE->GetValue(), PATH_FULL_SOURCE, true))
 	{
-		#ifdef ALIF_STUDIO_NO_STC
+		#ifdef AlifStudio_DisableSTC
 			CODE_MODIFIED = false;
 		#else
-			OBJ_CODE->SetSavePoint();
+			obj_CODE->SetSavePoint();
 		#endif
 	}
 	else
@@ -3838,12 +3962,12 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 		COMMAND.Append("\" -workpath=" + FileName_Source.GetPath());
 	#endif
 
-	#ifndef ALIF_STUDIO_NO_STC
+	#ifndef AlifStudio_DisableSTC
 
 		// Clear Error Indicators
 		if (CODE_ERROR_INDICATOR)
 		{
-			unsigned int TOTAL_LINES = (OBJ_CODE->GetLineCount()) - 1; // First line is 0
+			unsigned int TOTAL_LINES = (obj_CODE->GetLineCount()) - 1; // First line is 0
 
 			int endPsn = 0;
 			int startPsn = 0;
@@ -3851,14 +3975,14 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 
 			for (unsigned int LINE_NUMBER = 0; LINE_NUMBER <= TOTAL_LINES; LINE_NUMBER++)
 			{
-				endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-				startPsn = OBJ_CODE->PositionFromLine(LINE_NUMBER);
+				endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+				startPsn = obj_CODE->PositionFromLine(LINE_NUMBER);
 				len = endPsn - startPsn;
 
-				OBJ_CODE->IndicatorClearRange(startPsn, len);
+				obj_CODE->IndicatorClearRange(startPsn, len);
 			}
 
-			OBJ_CODE->MarkerDeleteAll(1);
+			obj_CODE->MarkerDeleteAll(1);
 
 			CODE_ERROR_INDICATOR = false;
 		}
@@ -3878,7 +4002,7 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 
 	bool PID_ERROR = false;
 
-    if ( PID == 0 || CURRENT_FILE_EXTENSION == "ALIFLIB" )
+    if ( PID == 0 || CURRENT_FILE_EXTENSION == "ALIFC" )
     {
 		OBJ_LOG->Clear();
 
@@ -3926,7 +4050,7 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 					OBJ_LOG->LoadFile(PATH_FULL_LOG);
 				}
 
-				#ifdef ALIF_STUDIO_NO_STC
+				#ifdef AlifStudio_DisableSTC
 
 					// TODO: Goto line number (LINE_NUMBER), in wxTextCtrl
 
@@ -3936,18 +4060,18 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 					int startPsn = 0;
 					int len = 0;
 
-					endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-					startPsn = OBJ_CODE->PositionFromLine(LINE_NUMBER);
+					endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+					startPsn = obj_CODE->PositionFromLine(LINE_NUMBER);
 					len = endPsn - startPsn;
 
-					OBJ_CODE->SetIndicatorCurrent(ID_CODE_ERROR_INDICATOR);
-					OBJ_CODE->IndicatorFillRange(startPsn, len);
+					obj_CODE->SetIndicatorCurrent(ID_CODE_ERROR_INDICATOR);
+					obj_CODE->IndicatorFillRange(startPsn, len);
 
-					OBJ_CODE->MarkerAdd(LINE_NUMBER, 1);
-					OBJ_CODE->MarkerSetBackground(1, wxColour(210,140,148));
-					OBJ_CODE->MarkerSetForeground(1, wxColour(197,107,116));
+					obj_CODE->MarkerAdd(LINE_NUMBER, 1);
+					obj_CODE->MarkerSetBackground(1, wxColour(210,140,148));
+					obj_CODE->MarkerSetForeground(1, wxColour(197,107,116));
 
-					OBJ_CODE->GotoLine(LINE_NUMBER);
+					obj_CODE->GotoLine(LINE_NUMBER);
 
 					//CODE_ERROR_INDICATOR_START = startPsn;
 					//CODE_ERROR_INDICATOR_LEN = len;
@@ -3980,39 +4104,6 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 		PID_ERROR = true;
 	}
 	
-	//wxString cmd;
-	//cmd = "notepad.exe";
-	//MyPipedProcess *process = new MyPipedProcess(this, cmd);
-	//m_pidLast = wxExecute(cmd, wxEXEC_ASYNC | wxEXEC_MAKE_GROUP_LEADER); //, &m_executeEnv
-	
-	/*
-	#ifdef __WXMSW__
-	wxArrayString output;
-	wxArrayString errors;
-	wxArrayString CMD;
-	wxExecuteEnv ENV;
-	
-	//ENV = "D:\\@IGS\\App\\_Software\\Alif\\Win";
-	
-	//ENV = "\"D:\\@IGS\\App\\_Software\\Alif\\Win\"";
-	CMD = "\"D:\\@IGS\\App\\_Software\\Alif\\Win\\alif.exe\" \"C:\\Users\\saif\\Desktop\\test.alif\" //\"C:\\Users\\saif\\Desktop\\testCMD.exe\" 2> D:\\LLL.log";
-	
-	//CMD = "D:\\@IGS\\App\\_Software\\Alif_Studio\\B.bat";
-	//CMD = "D:\\@IGS\\App\\_Software\\Alif\\Win\\_alif\\tmp\\4288_lk.bat";
-	
-	int xxxx = wxExecute (CMD, output, errors);
-	
-	OBJ_CODE->AppendText(wxString(xxxx));
-	
-	//int code = wxExecute(cmd, wxEXEC_SYNC | GetExecFlags(), NULL, &env);
-	//wxLogStatus(wxT("Process '%s' terminated with exit code %d."),cmd.c_str(), code);
-	
-	//wxExecute(wxString::Format("\"D:\\@IGS\\App\\_Software\\Alif\\Win\\alif.exe\" \"C:\\Users\\saif\\Desktop\\test.alif\" //\"C:\\Users\\saif\\Desktop\\test.exe\"", 
-	//"\"C:\\Users\\saif\\Desktop\""));
-	//fullPath.c_str()));
-	#endif
-	*/
-	
 	#ifdef _WIN32
 		wxTheApp->Yield();
 	#elif  __APPLE__
@@ -4044,7 +4135,7 @@ bool CLASS_WINDOW_MAIN::COMPILE_NOW()
 // RUN
 // ---------------------
 
-void CLASS_WINDOW_MAIN::RUN(wxCommandEvent &event)
+void Window_Main::RUN(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -4081,11 +4172,11 @@ void CLASS_WINDOW_MAIN::RUN(wxCommandEvent &event)
 // Compile / RUN
 // ---------------------
 
-void CLASS_WINDOW_MAIN::BUILD(wxCommandEvent &event)
+void Window_Main::BUILD(wxCommandEvent &event)
 {
 	event.Skip();
 
-	if (!CLASS_WINDOW_MAIN::COMPILE_NOW())
+	if (!Window_Main::COMPILE_NOW())
 		return;
 
 	#ifdef __APPLE__
@@ -4093,12 +4184,12 @@ void CLASS_WINDOW_MAIN::BUILD(wxCommandEvent &event)
 	#else
 		if (wxFileName::FileExists(PATH_FULL_EXECUTABLE))
 	#endif
-		CLASS_WINDOW_MAIN::RUN(event);
+		Window_Main::RUN(event);
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::PROP_IDE(wxCommandEvent &event)
+void Window_Main::PROP_IDE(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -4107,7 +4198,7 @@ void CLASS_WINDOW_MAIN::PROP_IDE(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::PROP_FONT(wxCommandEvent &event)
+void Window_Main::PROP_FONT(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -4120,7 +4211,7 @@ void CLASS_WINDOW_MAIN::PROP_FONT(wxCommandEvent &event)
 		wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 		false, // 
 		"Courier New");
- 		OBJ_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
+ 		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
 */
 
 /*
@@ -4128,10 +4219,10 @@ void CLASS_WINDOW_MAIN::PROP_FONT(wxCommandEvent &event)
 	wxFont     theFont;
 	wxColour   colour;
  
-	//theFont = OBJ_CODE->GetFont();
+	//theFont = obj_CODE->GetFont();
 	//fontData.SetInitialFont(theFont);
 
-	//colour = OBJ_CODE->GetForegroundColour();
+	//colour = obj_CODE->GetForegroundColour();
 	//fontData.SetColour(colour);
 
 	fontData.SetShowHelp(true);
@@ -4144,7 +4235,7 @@ void CLASS_WINDOW_MAIN::PROP_FONT(wxCommandEvent &event)
 
 		theFont = fontData.GetChosenFont();
 
-		OBJ_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, theFont);
+		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, theFont);
 		//theText->SetForegroundColour(fontData.GetColour());
 	}
 */
@@ -4152,7 +4243,7 @@ void CLASS_WINDOW_MAIN::PROP_FONT(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::PROP_COMPILER(wxCommandEvent &event)
+void Window_Main::PROP_COMPILER(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -4161,28 +4252,16 @@ void CLASS_WINDOW_MAIN::PROP_COMPILER(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::UPDATE(wxCommandEvent &event)
+void Window_Main::UPDATE(wxCommandEvent &event)
 {
 	event.Skip();
-
-	// This Func is called by Update Menu,
-	// and Update Tool Bar.
 
 	UPDATE_NOW(event);
 }
 
 // -------------------------------
-/*
-void CLASS_WINDOW_MAIN::UPDATE_BY_FILE(wxCommandEvent &event)
-{
-	event.Skip();
 
-	wxMessageBox(wxT("تحديث عن طريق ملف - هده الخاصية مازالت تحت التطوير، المرجو تحديث البرنامج عبر الانترنت  من حين لآخر\n\nللمزيد من المعلومات يرجى زيارة الموقع الرسمي : \n\nw w w . a l i f l a n g . o r g"));
-}
-*/
-// -------------------------------
-
-void CLASS_WINDOW_MAIN::HELP_PDF(wxCommandEvent &event)
+void Window_Main::HELP_PDF(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -4210,17 +4289,8 @@ void CLASS_WINDOW_MAIN::HELP_PDF(wxCommandEvent &event)
 }
 
 // -------------------------------
-/*
-void CLASS_WINDOW_MAIN::HELP_HTML(wxCommandEvent &event)
-{
-	event.Skip();
 
-	wxMessageBox(wxT("كتاب - هده الخاصية مازالت تحت التطوير، المرجو تحديث البرنامج عبر الانترنت  من حين لآخر\n\nللمزيد من المعلومات يرجى زيارة الموقع الرسمي : \n\nw w w . a l i f l a n g . o r g"));
-}
-*/
-// -------------------------------
-
-void CLASS_WINDOW_MAIN::HELP_ONLINE(wxCommandEvent &event)
+void Window_Main::HELP_ONLINE(wxCommandEvent &event)
 {
 	event.Skip();
 
@@ -4232,25 +4302,25 @@ void CLASS_WINDOW_MAIN::HELP_ONLINE(wxCommandEvent &event)
 #if  __APPLE__
 	// Mac About
 
-	void CLASS_WINDOW_MAIN::OnAbout(wxCommandEvent &event)
+	void Window_Main::OnAbout(wxCommandEvent &event)
 	{
 		event.Skip();
 
 		// This is special for Mac OS
 
-		CLASS_WINDOW_MAIN::ABOUT_IDE(event);
+		Window_Main::ABOUT_IDE(event);
 	}
 
 #endif
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::ABOUT_IDE(wxCommandEvent &event)
+void Window_Main::ABOUT_IDE(wxCommandEvent &event)
 {
 	event.Skip();
 
 	wxAboutDialogInfo info;
-		info.SetVersion(wxT("ألف ستوديو ") + ALIF_STUDIO_VERSION + wxT(" نسخة تجريبية"));
+		info.SetVersion(wxT("ألف ستوديو ") + Alif_Studio_Version + wxT(" نسخة تجريبية"));
 		info.SetDescription(wxT("برنامج ألف ستوديو و برنامج مترجم ألف\nهي برامج مفتوحة المصدر تحت رخصة\nجنو العمومية الإصدار الثالث GPLv3\n\nمكتبات ألف القياسية هي مكتبات مفتوحة المصدر\nتحت رخصة جنو المكتبة العمومية LGPLv3"));
 		info.SetWebSite(wxT("https://www.aliflang.org"));
 		info.SetName(wxT("حول"));
@@ -4259,39 +4329,30 @@ void CLASS_WINDOW_MAIN::ABOUT_IDE(wxCommandEvent &event)
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::ABOUT_BUG(wxCommandEvent &event)
+void Window_Main::ABOUT_BUG(wxCommandEvent &event)
 {
 	event.Skip();
 
 	wxLaunchDefaultBrowser("http://www.aliflang.org/bug");
-
-	/*
-	wxAboutDialogInfo info;
-		info.SetVersion(wxT("مترجم ألف ") + ALIF_VERSION);
-		info.SetDescription(wxT("برنامج مترجم ألف هو برنامج خاص بلغة البرمجة ألف، \nصمم و كتب من طرف المبرمج حسن دراكة سنة 2018، \nو هدا البرنامج يطور حاليا من طرف مجتمع مطوري لغة ألف، \nهدا البرنامج مجاني و لكم حرية التصرف فيه تحت شروط رخصة كنو النسخة الثالتة "));
-		info.SetWebSite(wxT("https://www.aliflang.org"));
-		info.SetName(wxT("حول"));
-	wxAboutBox(info);
-	*/
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::OnOpen(wxCommandEvent &event)
+void Window_Main::OnOpen(wxCommandEvent &event)
 {
 	event.Skip();
 	
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		if (CODE_MODIFIED)
 	#else
-		if (OBJ_CODE->IsModified())
+		if (obj_CODE->IsModified())
 	#endif
 	{
 		int answer = wxMessageBox(wxT("لقد غيرت محتوى الملف، هل تود حفظ الملف ؟"), wxT("خروج"), wxYES_NO | wxCANCEL, OBJ_CLASS_WINDOW_MAIN);
 		if (answer == wxYES)
 		{
 			// Save
-			if (!SAVE_FILE_UTF8(OBJ_CODE->GetValue(), PATH_FULL_SOURCE, true))
+			if (!SAVE_FILE_UTF8(obj_CODE->GetValue(), PATH_FULL_SOURCE, true))
 			{
 				wxMessageBox(wxT("لم تنجح عملية تسجيل الملف \nحاول مع ملف باسم فيه حروف إنجليزية فقط"), wxT("خطأ"), wxICON_WARNING);
 				return;
@@ -4302,12 +4363,6 @@ void CLASS_WINDOW_MAIN::OnOpen(wxCommandEvent &event)
 			return;
 		}
 	}
-	
-    //wxFileDialog *openDialog = new wxFileDialog(this, wxT("فتح ملف جديد"), wxT(""), wxT(""),
-	//wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|مكتبة  ( * . aliflib )|*.aliflib"), 
-	//wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_CHANGE_DIR);
-
-	//wxDirDialog *openDialog(this, wxT(" فتح مجلد "), wxT(""), wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST | wxDD_CHANGE_DIR);
 
 	wxDirDialog *openDialog = new wxDirDialog(this, wxT(" فتح مجلد "), wxT(""), 
 	wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST | wxDD_CHANGE_DIR, wxDefaultPosition);
@@ -4344,13 +4399,13 @@ void CLASS_WINDOW_MAIN::OnOpen(wxCommandEvent &event)
 			// UI Initilizing
 			UI_BUTTON_SAVE(false);
 			UI_BUTTON_BUILD(false);
-			#ifdef ALIF_STUDIO_NO_STC
-				OBJ_CODE->Clear();
+			#ifdef AlifStudio_DisableSTC
+				obj_CODE->Clear();
 			#else
-				OBJ_CODE->ClearAll();
+				obj_CODE->ClearAll();
 			#endif
-			OBJ_CODE->Enable(false);
-			OBJ_CODE->SetEditable(false);
+			obj_CODE->Enable(false);
+			obj_CODE->SetEditable(false);
 			OBJ_LOG->Clear();
 
 			// Initilizing
@@ -4365,16 +4420,9 @@ void CLASS_WINDOW_MAIN::OnOpen(wxCommandEvent &event)
 // Update
 // ---------------------
 
-void CLASS_WINDOW_MAIN::UPDATE_NOW(wxCommandEvent &event)
+void Window_Main::UPDATE_NOW(wxCommandEvent &event)
 {
 	event.Skip();
-
-	//OBJ_LOG->AppendText(wxT("\n ---------------- "));
-	//OBJ_LOG->AppendText(wxT("\n PATH_DIRECTORY : ") + PATH_DIRECTORY + " \n");
-	//OBJ_LOG->AppendText(wxT("\n PATH_FULL_SOURCE : ") + PATH_FULL_SOURCE + " \n");
-	//OBJ_LOG->AppendText(wxT("\n SOURCE_FILE_NAME : ") + SOURCE_FILE_NAME + " \n");
-	//OBJ_LOG->AppendText(wxT("\n ---------------- "));
-	//return;
 
 	if (!wxFileName::FileExists(PATH_FULL_UPDATE))
 	{
@@ -4385,16 +4433,16 @@ void CLASS_WINDOW_MAIN::UPDATE_NOW(wxCommandEvent &event)
 		return;
 	}
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		if (CODE_MODIFIED)
 	#else
-		if (OBJ_CODE->IsModified())
+		if (obj_CODE->IsModified())
 	#endif
 	{
 		int answer = wxMessageBox(wxT("لقد غيرت محتوى الملف، هل تود حفظ الملف ؟"), wxT("خروج"), wxYES_NO, OBJ_CLASS_WINDOW_MAIN);
 		if (answer == wxYES)
 		{
-			CLASS_WINDOW_MAIN::OnSave(event);
+			Window_Main::OnSave(event);
 		}
 	}
 
@@ -4446,7 +4494,6 @@ void CLASS_WINDOW_MAIN::UPDATE_NOW(wxCommandEvent &event)
 
 	// wxEXEC_ASYNC imidiat return
 	// wxEXEC_SYNC wait prog to exit
-
 	wxExecute(COMMAND, wxEXEC_ASYNC);
 }
 
@@ -4454,20 +4501,20 @@ void CLASS_WINDOW_MAIN::UPDATE_NOW(wxCommandEvent &event)
 // New
 // ---------------------
 
-void CLASS_WINDOW_MAIN::OnNew(wxCommandEvent &event)
+void Window_Main::OnNew(wxCommandEvent &event)
 {
 	event.Skip();
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		if (CODE_MODIFIED)
 	#else
-		if (OBJ_CODE->IsModified())
+		if (obj_CODE->IsModified())
 	#endif
 	{
-		int answer = wxMessageBox(wxT("لقد غيرت محتوى الملف، هل تود حفظ الملف ؟"), wxT("خروج"), wxYES_NO, OBJ_CLASS_WINDOW_MAIN);
+		int answer = wxMessageBox(wxT("لقد غيرت محتوى الملف، هل تود حفظ الملف ؟"), wxT("إنشاء ملف جديد"), wxYES_NO, OBJ_CLASS_WINDOW_MAIN);
 		if (answer == wxYES)
 		{
-			CLASS_WINDOW_MAIN::OnSave(event);
+			Window_Main::OnSave(event);
 		}
 	}
 
@@ -4475,7 +4522,7 @@ void CLASS_WINDOW_MAIN::OnNew(wxCommandEvent &event)
 	wxString Path;
 
 	wxFileDialog *saveDialog = new wxFileDialog(this, wxT("إنشاء ملف جديد"), PATH_DIRECTORY, wxT("New_Alif_File.alif"), // ملف_جديد
-		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
+		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
 
 	response = saveDialog->ShowModal();
 	
@@ -4491,7 +4538,7 @@ void CLASS_WINDOW_MAIN::OnNew(wxCommandEvent &event)
 		{
 			CURRENT_FILE_EXTENSION = "ALIF";
 
-			OBJ_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+			obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
 
 			/*
 			SAMPLE_CODE = wxT(	"\n#ألف\n"
@@ -4531,7 +4578,7 @@ void CLASS_WINDOW_MAIN::OnNew(wxCommandEvent &event)
 		{
 			CURRENT_FILE_EXTENSION = "ALIFUI";
 
-			OBJ_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+			obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
 
 			SAMPLE_CODE = wxT(	"\n#ألف\n"
 								" أداة نافذة (رئيسية, 10, 25, 400, 400, \"عنوان النافدة هنا\") \n\n"
@@ -4540,29 +4587,70 @@ void CLASS_WINDOW_MAIN::OnNew(wxCommandEvent &event)
 								"	أداة نص		(رئيسية, نص_1, 79, 149, 234, 30, \"نص جديد\") \n"
 								"	أداة ملصق	(رئيسية, ملصق_1, 84, 111, 224, 28, \"ملصق جديد\") ");
 		}
-		else if (fn.GetExt() == "aliflib")
+		else if (fn.GetExt() == "alifuiw")
 		{
-			CURRENT_FILE_EXTENSION = "ALIFLIB";
+			CURRENT_FILE_EXTENSION = "ALIFUIW";
 
-			OBJ_CODE->SetLayoutDirection (wxLayout_LeftToRight);
+			obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+
+			SAMPLE_CODE = wxT(R"( 
+<html>
+	...
+</html>
+ )" );
+		}
+		else if (fn.GetExt() == "ALIFC")
+		{
+			CURRENT_FILE_EXTENSION = "ALIFC";
+
+			obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
 
 			SAMPLE_CODE = wxT( R"( 
-// --------------------------------------------
-// -- wxWidgets شرح كيفية صنع مكتبة ألف جديدة بلغة سي++ و مكتبات
-// -- للحصول على معلومات أكثر، أو نشر الشيفرة، المرجو زيارة موقع مجتمع ألف
-// -- aliflang.org/community
-// --------------------------------------------
+// ---------------------------------------------------------------
+// هده الشيفرة هي لتجربة مكتبات وكس ويدجيتز مباشرة بلغة سي بلاس بلاس
+// ** المرجة عدم إستعمال شيفرة بلغة ألف هنا **
+// 
+// www.aliflang.org
+// ---------------------------------------------------------------
 
+#include <sstream>
 #include <wx/wx.h>
 
 int ID_FRAME_1 = 5000;
+
+// ----------------------
+// -- تحويل
+// ----------------------
+
+// More info
+// https://wiki.wxwidgets.org/Converting_everything_to_and_from_wxString
+
+wxString IntToStr(double INT_VAL){
+	
+	//return wxString::Format(wxT("%f"),INT_VAL);
+	
+	std::stringstream STRING_STREAM_BUFFER;
+	STRING_STREAM_BUFFER << INT_VAL;
+	std::string STRING_BUFFER = STRING_STREAM_BUFFER.str();
+	wxString mystring(STRING_BUFFER.c_str(), wxConvUTF8);
+	return mystring;
+}
+
+double StrToInt(wxString STR_VAL){
+	
+	double value;
+	if(STR_VAL.ToDouble(&value)){
+		return value;
+	}else{
+		return 0;
+	}
+}
 
 // --------------------------------------------
 // -- الإعلان العام للدوال
 // --------------------------------------------
 
-void Alif_Library_Example_1 (wxString msg);
-double Alif_Library_Example_2 (double foo, double bar);
+void MyFunction(wxString msg, double foo, double bar);
 
 // --------------------------------------------
 
@@ -4579,12 +4667,12 @@ class FRAME_1 : public wxFrame
 FRAME_1 *OBJ_FRAME_1;
 
 BEGIN_EVENT_TABLE(FRAME_1, wxFrame)
-
+ // Events here..
 END_EVENT_TABLE()
 
 FRAME_1 :: FRAME_1() : 
 	wxFrame(NULL, ID_FRAME_1, 
-	wxT("تجربة مكتبة !"),
+	wxT("تجربة C++ !"),
 	wxPoint(50, 50),
 	wxSize(450, 450)) 
 {
@@ -4592,9 +4680,7 @@ FRAME_1 :: FRAME_1() :
 	// -- نداء / استعمال الدوال
 	// --------------------------------------------
 
-	Alif_Library_Example_1( wxT("أهلا") );
-
-	double test = Alif_Library_Example_2(6, 4);
+	MyFunction( wxT("أهلا"), 6.2, 4.2);
 
 	// --------------------------------------------
 }
@@ -4635,14 +4721,11 @@ bool MyApp::OnInit()
 // -- الدوال
 // --------------------------------------------
 
-void Alif_Library_Example_1 (wxString msg)
-{
-	wxMessageBox( msg );
-}
-
-double Alif_Library_Example_2 (double foo, double bar)
-{
-	return foo + bar;
+void MyFunction(wxString msg, double foo, double bar){
+	
+	double res = foo + bar;
+	
+	wxMessageBox(wxT("Msg = ") + msg + wxT("\nRes = ") + IntToStr(res));
 }
  )" );
 
@@ -4655,19 +4738,6 @@ double Alif_Library_Example_2 (double foo, double bar)
 
 		if (SAVE_FILE_UTF8(SAMPLE_CODE, Path, false))
 		{
-			// UI Initilizing
-			/*
-			UI_BUTTON_SAVE(true);
-			if (CURRENT_FILE_EXTENSION == "ALIF")
-				UI_BUTTON_BUILD(true);
-			else
-				UI_BUTTON_BUILD(false);
-			OBJ_CODE->ClearAll();
-			OBJ_CODE->Enable(true);
-			OBJ_CODE->SetEditable(true);
-			OBJ_LOG->Clear();
-			*/
-
 			PATH_DIRECTORY = fn.GetPathWithSep();
 
 			SET_NEW_FILE(Path);
@@ -4697,31 +4767,11 @@ double Alif_Library_Example_2 (double foo, double bar)
 			return;
 		}
     }
-
-	/*
-	OBJ_LOG->AppendText(wxT("\n ID_UI_CONTROL_CURRENT_TYPE : "));
-	OBJ_LOG->AppendText(ID_UI_CONTROL_CURRENT_TYPE);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("ID_UI_WINDOW_NAME_CURRENT : "));
-	OBJ_LOG->AppendText(ID_UI_WINDOW_NAME_CURRENT);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("ID_UI_WINDOW_CURRENT : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(ID_UI_WINDOW_CURRENT));
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("UI_WINDOW_IDENTIFIER[ID_UI_WINDOW_CURRENT] : "));
-	OBJ_LOG->AppendText(UI_WINDOW_IDENTIFIER[ID_UI_WINDOW_CURRENT]);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("UI_WINDOW_CAPTION[ID_UI_WINDOW_CURRENT] : "));
-	OBJ_LOG->AppendText(UI_WINDOW_CAPTION[ID_UI_WINDOW_CURRENT]);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("UI_CONTROL_TOTAL : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(UI_CONTROL_TOTAL));
-	*/
 }
 
 // -------------------------------
 
-void CLASS_WINDOW_MAIN::PROPERTIES_CHANGED(wxPropertyGridEvent& event)
+void Window_Main::PROPERTIES_CHANGED(wxPropertyGridEvent& event)
 {
 	if (IGNORE_UPDATE_SETTINGS_EVENT)
 		return;
@@ -4827,9 +4877,9 @@ void CLASS_WINDOW_MAIN::PROPERTIES_CHANGED(wxPropertyGridEvent& event)
 	UI_GENERAT_ALIF_CODE();
 }
 
-// ****************************************************************************
-// ** Custum Functions ***********************************************************
-// ****************************************************************************
+// ---------------------
+// Methods
+// ---------------------
 
 void UI_GENERAT_ALIF_CODE()
 {
@@ -4899,12 +4949,12 @@ void UI_GENERAT_ALIF_CODE()
 	}
 
 	// Todo : Search and Replace line, aulieu de replace all text!
-	#ifdef ALIF_STUDIO_NO_STC
-		OBJ_CODE->Clear();
-		OBJ_CODE->AppendText(ALIF_CODE);
+	#ifdef AlifStudio_DisableSTC
+		obj_CODE->Clear();
+		obj_CODE->AppendText(ALIF_CODE);
 	#else
-		OBJ_CODE->ClearAll();
-		OBJ_CODE->SetText(ALIF_CODE);
+		obj_CODE->ClearAll();
+		obj_CODE->SetText(ALIF_CODE);
 	#endif
 
 	//if (!FIRST_GENERATED_CODE)
@@ -4917,8 +4967,8 @@ void UI_GENERAT_ALIF_CODE()
 
 void UI_MOVE_CONTROL(int ID)
 {
-	// x,y already set.
-	// but cotrl not moved.
+	// x,y already set in the propreties list.
+	// but the cotrl not moved yet!
 	
 	if (ID < 1 && ID_UI_CONTROL_CURRENT_TYPE == "WINDOW")
 	{
@@ -4945,8 +4995,8 @@ void UI_MOVE_CONTROL(int ID)
 
 void UI_RESIZE_CONTROL(int ID)
 {
-	// w,h already set.
-	// but cotrl not resezed.
+	// w,h already set in the propreties list.
+	// but the cotrl not resezed yet!
 	
 	if (ID < 1 && ID_UI_CONTROL_CURRENT_TYPE == "WINDOW")
 	{
@@ -4973,8 +5023,7 @@ void UI_RESIZE_CONTROL(int ID)
 
 void UI_CONTROL_CAPTION_UPDATE(int ID)
 {
-	// cap already set in glb var.
-	// but not in ctrl.
+	// Update the control caption
 	
 	if (ID < 1 && ID_UI_CONTROL_CURRENT_TYPE == "WINDOW")
 	{
@@ -5090,48 +5139,6 @@ void UI_UPDATE_SETTINGS(unsigned int ID)
 	}
 	
 	IGNORE_UPDATE_SETTINGS_EVENT = false;
-	
-	// ----------------------------------------------------------------------------------
-
-	// Debuging..
-/*
-	if (ID < 1)
-	{
-		OBJ_LOG->AppendText(wxT("\n Window ID : "));
-		OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(ID_UI_WINDOW_CURRENT));
-		OBJ_LOG->AppendText(wxT(" | "));
-		OBJ_LOG->AppendText(wxT("IDENTIFIER : "));
-		OBJ_LOG->AppendText(UI_WINDOW_IDENTIFIER[ID_UI_WINDOW_CURRENT]);
-		return;
-	}
-	
-	OBJ_LOG->AppendText(wxT("\n ID : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(ID));
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("UI_CONTROL_WINDOW : "));
-	OBJ_LOG->AppendText(UI_CONTROL_WINDOW[ID]);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("TYPE : "));
-	OBJ_LOG->AppendText(UI_CONTROL_TYPE[ID]);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("IDENTIFIER : "));
-	OBJ_LOG->AppendText(UI_CONTROL_IDENTIFIER[ID]);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("CAPTION : "));
-	OBJ_LOG->AppendText(UI_CONTROL_CAPTION[ID]);
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("X : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(UI_CONTROL_X[ID]));
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("Y : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(UI_CONTROL_Y[ID]));
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("W : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(UI_CONTROL_W[ID]));
-	OBJ_LOG->AppendText(wxT(" | "));
-	OBJ_LOG->AppendText(wxT("H : "));
-	OBJ_LOG->AppendText(CONVERT_INT_TO_STRING(UI_CONTROL_H[ID]));
-*/
 }
 
 // -------------------------------
@@ -5148,17 +5155,17 @@ void Exit()
 		return;
 	}
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		if (CODE_MODIFIED)
 	#else
-		if (OBJ_CODE->IsModified())
+		if (obj_CODE->IsModified())
 	#endif
 	{
 		int answer = wxMessageBox(wxT("لقد غيرت محتوى الملف، هل تود حفظ الملف ؟"), wxT("خروج"), wxYES_NO | wxCANCEL, OBJ_CLASS_WINDOW_MAIN);
 		if (answer == wxYES)
 		{
 			// Save
-			if (SAVE_FILE_UTF8( OBJ_CODE->GetValue(), PATH_FULL_SOURCE, true))
+			if (SAVE_FILE_UTF8( obj_CODE->GetValue(), PATH_FULL_SOURCE, true))
 			{
 				if (WINDOW_IS_CONSTRUCTED)
 					OBJ_UI_CLASS_WINDOW->Destroy();
@@ -5219,9 +5226,7 @@ void SET_TREE_FILES_LIST()
 	// DIR
 	TREE_ID_FILES_ROOT = OBJ_TREE_FILES_LIST->AddRoot(PATH_DIRECTORY, 0, 0);
 
-	// Set to have items, 
-	// to igior Linux crash when delete empty list
-	// bcs Root is an item.
+	// Fix Linux crash when delete empty list
 	TREE_FILES_HAVE_ITEM = true;
 	
 	// *.alif
@@ -5260,10 +5265,10 @@ void SET_TREE_FILES_LIST()
 			NEXT = OBJ_DIR.GetNext(&FILENAME);
 		}
 	}
+
+	// *.alifuiw
 	
-	// *.aliflib
-	
-	FILE_EXTENSION = wxT("*.aliflib");
+	FILE_EXTENSION = wxT("*.alifuiw");
 	NEXT = OBJ_DIR.GetFirst(&FILENAME, FILE_EXTENSION, wxDIR_FILES);
 	while ( NEXT )
 	{
@@ -5271,8 +5276,27 @@ void SET_TREE_FILES_LIST()
 		{
 			wxFileName fname( FILENAME );
 			TREE_ID_FILES_ITEM[i] = OBJ_TREE_FILES_LIST->AppendItem(TREE_ID_FILES_ROOT, 
-			fname.GetName() + wxT(" . مكتبة"), 3, 3);
-			TREE_FILES_TYPE[i] = "ALIFLIB";
+			fname.GetName() + wxT(" . واجهة ويب"), 2, 2);
+			TREE_FILES_TYPE[i] = "ALIFUIW";
+			TREE_FILES_PATH[i] = PATH_DIRECTORY + FILENAME;
+			TREE_FILES_TOTAL_ITEM++;
+			i++;
+			NEXT = OBJ_DIR.GetNext(&FILENAME);
+		}
+	}
+	
+	// *.alifc
+	
+	FILE_EXTENSION = wxT("*.alifc");
+	NEXT = OBJ_DIR.GetFirst(&FILENAME, FILE_EXTENSION, wxDIR_FILES);
+	while ( NEXT )
+	{
+		if (FILENAME != "")
+		{
+			wxFileName fname( FILENAME );
+			TREE_ID_FILES_ITEM[i] = OBJ_TREE_FILES_LIST->AppendItem(TREE_ID_FILES_ROOT, 
+			fname.GetName() + wxT(" . C++"), 3, 3);
+			TREE_FILES_TYPE[i] = "ALIFC";
 			TREE_FILES_PATH[i] = PATH_DIRECTORY + FILENAME;
 			TREE_FILES_TOTAL_ITEM++;
 			i++;
@@ -5359,11 +5383,11 @@ void UI_REMOVE_CONTROL(unsigned int ID)
 
 static std::map<int, bool> UI_ERROR_LINES_STATUS;
 
-#ifndef ALIF_STUDIO_NO_STC
+#ifndef AlifStudio_DisableSTC
 
 	void UILOG_COLOR()
 	{
-		unsigned int TOTAL_LINES = (OBJ_CODE->GetLineCount()) - 1; // First line is 0
+		unsigned int TOTAL_LINES = (obj_CODE->GetLineCount()) - 1; // First line is 0
 
 		int endPsn = 0;
 		int startPsn = 0;
@@ -5371,39 +5395,39 @@ static std::map<int, bool> UI_ERROR_LINES_STATUS;
 
 		for (unsigned int LINE_NUMBER = 0; LINE_NUMBER <= TOTAL_LINES; LINE_NUMBER++)
 		{
-			endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-			startPsn = OBJ_CODE->PositionFromLine(LINE_NUMBER);
+			endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+			startPsn = obj_CODE->PositionFromLine(LINE_NUMBER);
 			len = endPsn - startPsn;
 
 			if (UI_ERROR_LINES_STATUS[LINE_NUMBER])
 			{
-				OBJ_CODE->SetIndicatorCurrent(ID_CODE_ERROR_INDICATOR);
-				OBJ_CODE->IndicatorFillRange(startPsn, len);
+				obj_CODE->SetIndicatorCurrent(ID_CODE_ERROR_INDICATOR);
+				obj_CODE->IndicatorFillRange(startPsn, len);
 			}
 			else
 			{
-				OBJ_CODE->IndicatorClearRange(startPsn, len);
+				obj_CODE->IndicatorClearRange(startPsn, len);
 			}
 		}
 
 		// ------------------------
 
-		//int endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-		//int startPsn= OBJ_CODE->PositionFromLine(LINE_NUMBER);
+		//int endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+		//int startPsn= obj_CODE->PositionFromLine(LINE_NUMBER);
 		//int len = endPsn - startPsn;
 
-		//OBJ_CODE->SetIndicatorCurrent(ID_CODE_ERROR_INDICATOR);
-		//OBJ_CODE->IndicatorFillRange(startPsn, len);
+		//obj_CODE->SetIndicatorCurrent(ID_CODE_ERROR_INDICATOR);
+		//obj_CODE->IndicatorFillRange(startPsn, len);
 		
 		// ------------------------
 
 		//int errorStyleNo = 32; //wxSTC_STYLE_BRACEBAD;
 
-		//OBJ_CODE->StyleSetForeground(errorStyleNo, wxColour(50, 54, 58));
-		//OBJ_CODE->StyleSetBackground(errorStyleNo, wxColour(250, 251, 252));
+		//obj_CODE->StyleSetForeground(errorStyleNo, wxColour(50, 54, 58));
+		//obj_CODE->StyleSetBackground(errorStyleNo, wxColour(250, 251, 252));
 
-		//OBJ_CODE->StartStyling(0);
-		//OBJ_CODE->SetStyling(10, errorStyleNo);
+		//obj_CODE->StartStyling(0);
+		//obj_CODE->SetStyling(10, errorStyleNo);
 
 		// ------------------------
 	}
@@ -5474,8 +5498,11 @@ void UI_DRAW_NEW_CONTROL(wxString TYPE, int X, int Y)
 	}
 }
 
-void UI_PARSE_SOURCE()
-{
+void UI_PARSE_SOURCE(){
+
+	if (CURRENT_FILE_EXTENSION != "ALIFUI")
+		return;
+
 	if (WINDOW_IS_CONSTRUCTED)
 	{
 		OBJ_UI_CLASS_WINDOW->Destroy();
@@ -5488,11 +5515,11 @@ void UI_PARSE_SOURCE()
 
 	UI_EMPTY_SETTINGS();
 
-	#ifndef ALIF_STUDIO_NO_STC
+	#ifndef AlifStudio_DisableSTC
 		// Clear Error Indicators
 		if (CODE_ERROR_INDICATOR)
 		{
-			unsigned int TOTAL_LINES = (OBJ_CODE->GetLineCount()) - 1; // First line is 0
+			unsigned int TOTAL_LINES = (obj_CODE->GetLineCount()) - 1; // First line is 0
 
 			int endPsn = 0;
 			int startPsn = 0;
@@ -5500,22 +5527,22 @@ void UI_PARSE_SOURCE()
 
 			for (unsigned int LINE_NUMBER = 0; LINE_NUMBER <= TOTAL_LINES; LINE_NUMBER++)
 			{
-				endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-				startPsn = OBJ_CODE->PositionFromLine(LINE_NUMBER);
+				endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+				startPsn = obj_CODE->PositionFromLine(LINE_NUMBER);
 				len = endPsn - startPsn;
 
-				OBJ_CODE->IndicatorClearRange(startPsn, len);
+				obj_CODE->IndicatorClearRange(startPsn, len);
 			}
 
-			OBJ_CODE->MarkerDeleteAll(1);
+			obj_CODE->MarkerDeleteAll(1);
 
 			CODE_ERROR_INDICATOR = false;
 		}
 	#endif
 
-	#ifndef ALIF_STUDIO_NO_STC
-		OBJ_CODE->AnnotationSetStyles(2, "wxRED");
-		//OBJ_CODE->BraceHighlight(2,4);
+	#ifndef AlifStudio_DisableSTC
+		obj_CODE->AnnotationSetStyles(2, "wxRED");
+		//obj_CODE->BraceHighlight(2,4);
 	#endif
 
 	// ---------------------------------------------------------
@@ -5544,11 +5571,11 @@ void UI_PARSE_SOURCE()
 	// ---------------------
 	// Lines loop
 	// ---------------------
-		
-	#ifdef ALIF_STUDIO_NO_STC
-		unsigned int TOTAL_LINES = (OBJ_CODE->GetNumberOfLines()) - 1; // First line is 0
+	
+	#ifdef AlifStudio_DisableSTC
+		unsigned int TOTAL_LINES = (obj_CODE->GetNumberOfLines()) - 1; // First line is 0
 	#else
-		unsigned int TOTAL_LINES = (OBJ_CODE->GetLineCount()) - 1; // First line is 0
+		unsigned int TOTAL_LINES = (obj_CODE->GetLineCount()) - 1; // First line is 0
 	#endif
 
 	for (unsigned int LINE_NUMBER = 0; LINE_NUMBER <= TOTAL_LINES; LINE_NUMBER++)
@@ -5557,10 +5584,10 @@ void UI_PARSE_SOURCE()
 		// Lexer (Char loop)
 		// ---------------------
 
-		#ifdef ALIF_STUDIO_NO_STC
-			wxString LINE = OBJ_CODE->GetLineText(LINE_NUMBER);
+		#ifdef AlifStudio_DisableSTC
+			wxString LINE = obj_CODE->GetLineText(LINE_NUMBER);
 		#else
-			wxString LINE = OBJ_CODE->GetLine(LINE_NUMBER);
+			wxString LINE = obj_CODE->GetLine(LINE_NUMBER);
 		#endif
 
 		LINE = TRIM(LINE);
@@ -5906,8 +5933,6 @@ void UI_PARSE_SOURCE()
 
 	} // End line loop.
 
-	
-
 	// ---------------------------------------------------------
 	// Color Error Lines
 	// ---------------------------------------------------------
@@ -5916,7 +5941,7 @@ void UI_PARSE_SOURCE()
 	{
 		// There no Window in this 
 		// Source Code, or there some errors
-		// So we need Clean
+		// So we need to Clean
 
 		OBJ_TREE_WINDOW->DeleteAllItems();
 
@@ -5931,13 +5956,13 @@ void UI_PARSE_SOURCE()
 		UI_CONTROL_IS_SET.clear();
 
 		UI_EMPTY_SETTINGS();
-		#ifndef ALIF_STUDIO_NO_STC
+		#ifndef AlifStudio_DisableSTC
 			UILOG_COLOR();
 		#endif
 	}
 	else
 	{
-		#ifndef ALIF_STUDIO_NO_STC
+		#ifndef AlifStudio_DisableSTC
 			UILOG_COLOR();
 		#endif
 		OBJ_TREE_WINDOW->ExpandAll();
@@ -5957,6 +5982,8 @@ void UI_MANAGER(unsigned int ID_FILE)
 		OBJ_TREE_WINDOW->DeleteAllItems();
 
 	UI_EMPTY_SETTINGS();
+	obj_CODE->Clear();
+	OBJ_LOG->Clear();
 
 	wxString EXTENSION = TREE_FILES_TYPE[ID_FILE];
 	
@@ -5964,90 +5991,121 @@ void UI_MANAGER(unsigned int ID_FILE)
 	{
 		// Alif UI
 
-		OBJ_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+		obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
 
 		// ---------------------
 		// UI Initilizing
 		// ---------------------
 
-		#ifndef ALIF_STUDIO_NO_STC
-			OBJ_CODE->SetLexer(wxSTC_LEX_LUA);
+		#ifndef AlifStudio_DisableSTC
+			obj_CODE->SetLexer(wxSTC_LEX_LUA);
 		#endif
 
 		// UI Initilizing
 		UI_BUTTON_SAVE(true);
 		UI_BUTTON_BUILD(false);
-		#ifdef ALIF_STUDIO_NO_STC
-			OBJ_CODE->Clear();
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->Clear();
 		#else
-			OBJ_CODE->ClearAll();
+			obj_CODE->ClearAll();
 		#endif
-		OBJ_CODE->Enable(true);
-		OBJ_CODE->SetEditable(true);
-		OBJ_LOG->Clear();
+		obj_CODE->Enable(true);
+		obj_CODE->SetEditable(true);
 		
-		//OBJ_CODE->Show(false);
-		//OBJ_CODE->Destroy();
+		//obj_CODE->Show(false);
+		//obj_CODE->Destroy();
 
-		OBJ_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
+		obj_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
 		
 		UI_PARSE_SOURCE();
 
 		// Show Aui Designer Panels
-		AUI_GUI_DESIGNER(true);
+		UI_DesignerShow(true, false);
 	}
-	else if (EXTENSION == "ALIFLIB")
+	else if (EXTENSION == "ALIFUIW")
+	{
+		// Alif UI Web
+
+		obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
+
+		// ---------------------
+		// UI Initilizing
+		// ---------------------
+
+		#ifndef AlifStudio_DisableSTC
+			obj_CODE->SetLexer(wxSTC_LEX_LUA); 
+			// wxSTC_LEX_CSS | wxSTC_LEX_HTML | wxSTC_LEX_XML
+		#endif
+
+		UI_BUTTON_SAVE(true);
+		UI_BUTTON_BUILD(false);
+
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->Clear();
+		#else
+			obj_CODE->ClearAll();
+		#endif
+
+		obj_CODE->Enable(true);
+		obj_CODE->SetEditable(true);
+		
+		//obj_CODE->Show(false);
+		//obj_CODE->Destroy();
+
+		obj_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
+
+		// Show UI Web
+		UI_DesignerShow(false, true);
+	}
+	else if (EXTENSION == "ALIFC")
 	{
 		// Alif Library
 
-		OBJ_CODE->SetLayoutDirection (wxLayout_LeftToRight);
+		obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
 
-		// TODO: Create func to StyleClearAll(), and switch styles between Lib and Alif
-		//OBJ_CODE->SetLexer(wxSTC_LEX_CPP);
+		// TODO: Change style from Alif(LUA) to C++
 
 		// UI Initilizing
 		UI_BUTTON_SAVE(true);
 		UI_BUTTON_BUILD(true);
-		#ifdef ALIF_STUDIO_NO_STC
-			OBJ_CODE->Clear();
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->Clear();
 		#else
-			OBJ_CODE->ClearAll();
+			obj_CODE->ClearAll();
 		#endif
-		OBJ_CODE->Enable(true);
-		OBJ_CODE->SetEditable(true);
-		OBJ_LOG->Clear();
+		obj_CODE->Enable(true);
+		obj_CODE->SetEditable(true);
 
-		OBJ_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
+		obj_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
 
-		// Hide Aui Designer Panels
-		AUI_GUI_DESIGNER(false);
+		// Hide Aui Designer Panels / UI Web
+		UI_DesignerShow(false, false);
 	}
 	else
 	{
 		// Alif Source Code
 
-		OBJ_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+		obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
 
-		#ifndef ALIF_STUDIO_NO_STC
-			OBJ_CODE->SetLexer(wxSTC_LEX_LUA);
+		#ifndef AlifStudio_DisableSTC
+			obj_CODE->SetLexer(wxSTC_LEX_LUA);
 		#endif
 
 		// UI Initilizing
 		UI_BUTTON_SAVE(true);
 		UI_BUTTON_BUILD(true);
-		#ifdef ALIF_STUDIO_NO_STC
-			OBJ_CODE->Clear();
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->Clear();
 		#else
-			OBJ_CODE->ClearAll();
+			obj_CODE->ClearAll();
 		#endif
-		OBJ_CODE->Enable(true);
-		OBJ_CODE->SetEditable(true);
-		OBJ_LOG->Clear();
+		obj_CODE->Enable(true);
+		obj_CODE->SetEditable(true);
 
-		OBJ_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
+		obj_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
 
-		// Hide Aui Designer Panels
-		AUI_GUI_DESIGNER(false);
+		// Hide Aui Designer Panels / UI Web
+		UI_DesignerShow(false, false);
 	}
 }
 
@@ -6133,12 +6191,12 @@ bool SAVE_FILE_UTF8(wxString TXT, wxString PATH, bool OuverWrite)
 
 void SET_NEW_FILE(wxString PATH)
 {
-	#ifndef ALIF_STUDIO_NO_STC
+	#ifndef AlifStudio_DisableSTC
 
 		// Clear Error Indicators
 		if (CODE_ERROR_INDICATOR)
 		{
-			unsigned int TOTAL_LINES = (OBJ_CODE->GetLineCount()) - 1; // First line is 0
+			unsigned int TOTAL_LINES = (obj_CODE->GetLineCount()) - 1; // First line is 0
 
 			int endPsn = 0;
 			int startPsn = 0;
@@ -6146,14 +6204,14 @@ void SET_NEW_FILE(wxString PATH)
 
 			for (unsigned int LINE_NUMBER = 0; LINE_NUMBER <= TOTAL_LINES; LINE_NUMBER++)
 			{
-				endPsn = OBJ_CODE->GetLineEndPosition(LINE_NUMBER);
-				startPsn = OBJ_CODE->PositionFromLine(LINE_NUMBER);
+				endPsn = obj_CODE->GetLineEndPosition(LINE_NUMBER);
+				startPsn = obj_CODE->PositionFromLine(LINE_NUMBER);
 				len = endPsn - startPsn;
 
-				OBJ_CODE->IndicatorClearRange(startPsn, len);
+				obj_CODE->IndicatorClearRange(startPsn, len);
 			}
 
-			OBJ_CODE->MarkerDeleteAll(1);
+			obj_CODE->MarkerDeleteAll(1);
 
 			CODE_ERROR_INDICATOR = false;
 		}
@@ -6169,7 +6227,7 @@ void SET_NEW_FILE(wxString PATH)
 		SOURCE_FILE_NAME = "";
 		PATH_FULL_EXECUTABLE = "";
 		OBJ_CLASS_WINDOW_MAIN->SetLabel(wxT("ألف ستوديو [نسخة تجريبية]"));
-		OBJ_CODE->DiscardEdits();
+		obj_CODE->DiscardEdits();
 
 		return; // TODO: Remove this to test debuging tool in windows
 	}
@@ -6187,11 +6245,11 @@ void SET_NEW_FILE(wxString PATH)
 	// Title
 	OBJ_CLASS_WINDOW_MAIN->SetLabel(SOURCE_FILE_NAME + wxT(" - ألف ستوديو [نسخة تجريبية]"));
 
-	OBJ_CODE->DiscardEdits();
+	obj_CODE->DiscardEdits();
 
-	#ifdef ALIF_STUDIO_NO_STC
+	#ifdef AlifStudio_DisableSTC
 		CODE_MODIFIED = false;
 	#else
-		OBJ_CODE->SetSavePoint();
+		obj_CODE->SetSavePoint();
 	#endif
 }

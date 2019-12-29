@@ -1,6 +1,6 @@
 REM # ========================
-REM # (C)2018 Hassan DRAGA
-REM # Alif Studio
+REM # (C)2020 Hassan DRAGA
+REM # Alif Studio 2
 REM # Win32
 REM # www.aliflang.org
 REM # License : GPLv3
@@ -20,7 +20,7 @@ cls
 echo.
 
 	echo ----------------------------
-	echo Alif Studio
+	echo Alif Studio 2
 	echo ----------------------------
 	echo.
 
@@ -53,7 +53,7 @@ if exist "bin\alifstudio.exe" (
 		echo Linking...
 		echo.
 		
-		"%FOLDER%\bin\g++" -I "%FOLDER%\include" -Os -static-libgcc -static-libstdc++ -m32 -finput-charset=utf-8 -o "bin\alifstudio.exe" "res\win_alifstudio.res" "alifstudio.o" -mthreads -L"%FOLDER%\lib" -Wl,--subsystem,windows -mwindows -lwxbase31u_alif_lib_net -lwxmsw31u_alif_lib_gl -lopengl32 -lglu32 -lwxmsw31u_alif_lib_aui -lwxmsw31u_alif_lib_propgrid -lwxmsw31u_alif_lib_adv -lwxmsw31u_alif_lib_stc -lwxmsw31u_alif_lib_core  -lwxbase31u_alif_lib -lwxscintilla -lwxtiff -lwxjpeg -lwxpng -lwxzlib -lwxregexu -lwxexpat -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lwinspool -lwinmm -lshell32 -lshlwapi -lcomctl32 -lole32 -loleaut32 -luuid -lrpcrt4 -ladvapi32 -lversion -lwsock32 -lwininet -loleacc -luxtheme
+		"%FOLDER%\bin\g++" -I "%FOLDER%\include" -Os -static-libgcc -static-libstdc++ -m32 -finput-charset=utf-8 -o "bin\alifstudio.exe" "res\win_alifstudio.res" "alifstudio.o" -mthreads -L"%FOLDER%\lib" -Wl,--subsystem,windows -mwindows -lwxmsw31u_alif_lib_gl -lopengl32 -lglu32 -lwxmsw31u_alif_lib_webview -lwxmsw31u_alif_lib_aui -lwxmsw31u_alif_lib_propgrid -lwxmsw31u_alif_lib_adv -lwxmsw31u_alif_lib_stc -lwxmsw31u_alif_lib_core  -lwxbase31u_alif_lib -lwxscintilla -lwxtiff -lwxjpeg -lwxpng -lwxzlib -lwxregexu -lwxexpat -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lwinspool -lwinmm -lshell32 -lshlwapi -lcomctl32 -lole32 -loleaut32 -luuid -lrpcrt4 -ladvapi32 -lversion -lwsock32 -lwininet -loleacc -luxtheme
 
 		if not exist "bin\alifstudio.exe" (
 		
@@ -76,3 +76,7 @@ if exist "bin\alifstudio.exe" (
 		)
 	)
 )
+
+del *.o
+del *.res
+del *.d
