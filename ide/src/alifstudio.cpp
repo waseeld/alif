@@ -1921,7 +1921,7 @@ Window_Main :: Window_Main() :
 		// ألف أضف C++ رئيسية ـسـ  واجهة خاص نهاية كلما نافذة دالة عدد نص كائن إذا و أو سطر رجوع
 		// صنف أداة نقر زر نص ملصق إظهار إخفاء تدمير عنوان نص تجميد عرض محتوى ارتفاع أفصول أرتوب 
 
-		obj_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف C++ نافذة صنف دالة _س_ واجهة " + HTML_CSS_JS_Keywords_Bold + CPP_KEY_WORDS_Bold));
+		obj_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف C++ واجهة_ويب _ج_ نافذة صنف دالة _س_ واجهة " + HTML_CSS_JS_Keywords_Bold + CPP_KEY_WORDS_Bold));
 			obj_CODE->StyleSetBold(wxSTC_LUA_WORD, true);
 
 		obj_CODE->SetKeyWords(1, wxT(" هدم بناء نقر رئيسية " + CPP_KEY_WORDS + HTML_CSS_JS_Keywords));
