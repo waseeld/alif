@@ -70,7 +70,6 @@ using namespace std;
     #include <wx/wx.h>
 #endif
 
-#include <wx/aui/aui.h>
 #include <wx/event.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
@@ -96,6 +95,11 @@ using namespace std;
 #include <wx/msgdlg.h>
 #include <wx/aboutdlg.h>
 #include <wx/webview.h>
+#include <wx/aui/aui.h>
+
+#include <wx/dc.h>				// Debuging crash in linux...
+#include <wx/glcanvas.h>		// Debuging crash in linux...
+//#include "img.h"				// Debuging crash in linux...
 
 // XPM
 #include <wx/image.h>
@@ -475,7 +479,7 @@ wxTreeItemId TREE_ID_WINDOW_LAST_BOLD;
 
 // wxAui Panels
 
-wxAuiManager AUI_MANAGER;
+wxAuiManager* AUI_MANAGER;
 
 int ID_CODE_ERROR_INDICATOR = 8;				// or any number between 8 and 32
 //int CODE_ERROR_INDICATOR_START;				// to clear error when new compile
@@ -1257,7 +1261,7 @@ Window_Main :: Window_Main() :
 	// wxAUI Construction
 	// -------------------------
 	// notify wxAUI which frame to use
-	AUI_MANAGER.SetManagedWindow(this);
+	AUI_MANAGER->SetManagedWindow(this);
 	
 	// -------------------------
 	// Icon Construction
@@ -2105,83 +2109,83 @@ Window_Main :: Window_Main() :
 	#ifdef _WIN32
 
 		// Code
-		AUI_MANAGER.AddPane(obj_CODE, 
+		AUI_MANAGER->AddPane(obj_CODE, 
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
 		// Files
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, 
+		AUI_MANAGER->AddPane(OBJ_TREE_FILES_LIST, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
 		// UI
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, 
+		AUI_MANAGER->AddPane(OBJ_TREE_WINDOW, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
 		// WUI
-		AUI_MANAGER.AddPane(obj_WebUI,
+		AUI_MANAGER->AddPane(obj_WebUI,
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ويب ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(500,500).MaxSize(500,500).Resizable(true).Floatable(true).Right());
 		// Controls
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, 
+		AUI_MANAGER->AddPane(OBJ_TREE_CONTROLS, 
 		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
 		// Propreties
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, 
+		AUI_MANAGER->AddPane(OBJ_PROPERTIES, 
 		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
 		// Log
-		AUI_MANAGER.AddPane(OBJ_LOG, 
+		AUI_MANAGER->AddPane(OBJ_LOG, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
 		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom());
 
 	#elif  __APPLE__
 
-		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
+		AUI_MANAGER->AddPane(obj_CODE, //wxCENTER);
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
 		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		AUI_MANAGER->AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
 		
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		AUI_MANAGER->AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
 		
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
+		AUI_MANAGER->AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
 		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
 		
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
+		AUI_MANAGER->AddPane(OBJ_PROPERTIES, //wxRIGHT, 
 		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
 		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		AUI_MANAGER->AddPane(OBJ_LOG, //wxBOTTOM, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
 		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
 
 	#else
 
-		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
+		AUI_MANAGER->AddPane(obj_CODE, //wxCENTER);
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
 		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		AUI_MANAGER->AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
 
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
+		AUI_MANAGER->AddPane(OBJ_PROPERTIES, //wxRIGHT, 
 		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
 
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
+		AUI_MANAGER->AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
 		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
 
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		AUI_MANAGER->AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
 		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		AUI_MANAGER->AddPane(OBJ_LOG, //wxBOTTOM, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
 		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
 
@@ -2191,7 +2195,7 @@ Window_Main :: Window_Main() :
 	// wxAUI Update
 	// -------------------------
 
-	AUI_MANAGER.Update();
+	AUI_MANAGER->Update();
 
 	// -------------------------
 	// UI Initilizing
@@ -2265,7 +2269,7 @@ Window_Main::~Window_Main()
 {
 	// after execution of OnClose()
 	// deinitialize the frame manager
-    AUI_MANAGER.UnInit();
+    AUI_MANAGER->UnInit();
 }
 
 // ------------------------------------------------
@@ -2312,10 +2316,10 @@ void UI_DesignerShow(bool DesignerShow, bool WebUIShow){
 
 	// Hide or show Designer / WebUI
 
-	wxAuiPaneInfo& PI_Window = AUI_MANAGER.GetPane(OBJ_TREE_WINDOW);
-	wxAuiPaneInfo& PI_Control = AUI_MANAGER.GetPane(OBJ_TREE_CONTROLS);
-	wxAuiPaneInfo& PI_Prop = AUI_MANAGER.GetPane(OBJ_PROPERTIES);
-	wxAuiPaneInfo& PI_WebUI = AUI_MANAGER.GetPane(obj_WebUI);
+	wxAuiPaneInfo& PI_Window = AUI_MANAGER->GetPane(OBJ_TREE_WINDOW);
+	wxAuiPaneInfo& PI_Control = AUI_MANAGER->GetPane(OBJ_TREE_CONTROLS);
+	wxAuiPaneInfo& PI_Prop = AUI_MANAGER->GetPane(OBJ_PROPERTIES);
+	wxAuiPaneInfo& PI_WebUI = AUI_MANAGER->GetPane(obj_WebUI);
 
 	if (DesignerShow){
 
@@ -2353,7 +2357,7 @@ void UI_DesignerShow(bool DesignerShow, bool WebUIShow){
 			PI_WebUI.Hide();
 	}
 
-	AUI_MANAGER.Update();
+	AUI_MANAGER->Update();
 }
 
 // ------------------------------------------------
