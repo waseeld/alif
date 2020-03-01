@@ -120,11 +120,25 @@ using namespace std;
 // IDE Version
 // ------------------------------------------------
 
-const static wxString Alif_Studio_Version = wxT("2.0 Beta 1");
+const static wxString Alif_Studio_Version = wxT("2.0 Beta 2");
 wxString Alif_Compiler_Version = wxT("0");
 
 // ------------------------------------------------
-// Todo list
+// Todo list - Alusus lang.
+// ------------------------------------------------
+
+// TODO: Alusus --> Make terminal hold without auto. close. 
+//					x-terminal-emulator -H -e "alusus hello.alusus & pause"
+//					this didn't work!.
+
+// TODO: Alusus --> Did Alusus can provide binary file?
+//					if yes, then we need do extra work here.
+
+// TODO: Alusus --> Making Alusu core support "-alifstudio" argument
+//					See this for more info: https://github.com/hassandraga/alif/issues/8
+
+// ------------------------------------------------
+// Todo list - Alif lang.
 // ------------------------------------------------
 
 // TODO: When click on STC, last find_position must be updated imidiatly.
@@ -577,6 +591,10 @@ wxTreeCtrl* OBJ_TREE_CONTROLS;
 wxPropertyGrid* OBJ_PROPERTIES;
 
 wxWebView* obj_WebUI;
+
+// Alusus
+
+	// No global vars right now.
 
 // --------------------------------
 // DrawPanel Definition
@@ -1110,8 +1128,10 @@ void OPEN_NEW_FILE(wxString FILE_PATH)
 			CURRENT_FILE_EXTENSION = "ALIF";
 		else if (fn.GetExt() == "alifui")
 			CURRENT_FILE_EXTENSION = "ALIFUI";
-		else if (fn.GetExt() == "ALIFC")
+		else if (fn.GetExt() == "alifc")
 			CURRENT_FILE_EXTENSION = "ALIFC";
+		else if (fn.GetExt() == "alusus")
+			CURRENT_FILE_EXTENSION = "ALUSUS";
 		else
 		{
 			wxMessageBox("امتداد الملف غير معروف - " + fn.GetExt(), wxT("خطأ"), wxICON_WARNING);
@@ -1592,20 +1612,6 @@ Window_Main :: Window_Main() :
 	#else
 		// Linux
 
-		/*    this saved, maybe help when using SCINTILLA on Linux, this is kanet dyal txtctrl lol
-			
-		obj_CODE = new wxTextCtrl(OBJ_PANEL_1, ID_CODE, wxT(""), wxPoint(0, 0), 
-		wxSize(600, 10000), wxTE_MULTILINE | wxBORDER_NONE | wxTE_NO_VSCROLL | 
-		wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
-		*/
-			
-		//wxTE_RIGHT | wxALIGN_RIGHT
-		//wxTE_NO_VSCROLL | wxBORDER_NONE | wxTE_PROCESS_ENTER
-		//EM_SETBIDIOPTIONS | EM_SETEDITSTYLE
-		//WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR | WS_EX_LAYOUTRTL
-		//wxHSCROLL | wxTE_RICH2 | wxTE_RIGHT
-		//obj_CODE->SetLayoutDirection(wxLayout_RightToLeft);
-
 		obj_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
 		wxTE_MULTILINE | wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB |  wxBORDER_NONE | wxVERTICAL |
 		wxRIGHT | 
@@ -1618,15 +1624,22 @@ Window_Main :: Window_Main() :
 
 		obj_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
 		obj_CODE->SetCodePage(wxSTC_CP_UTF8);
-			
+		
  		//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
 		wxFont CODE_FONT (13,
 		wxFONTFAMILY_DEFAULT, // wxFONTFAMILY_SWISS
 		wxFONTSTYLE_NORMAL, // wxFONTSTYLE_ITALIC
 		wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 		false, // 
-		"Courier New");
+		"Courier New, Noto Kufi Arabic");
  		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
+
+		obj_CODE->SetExtraDescent(8); // Line height
+		
+		// TODO: We need allow invalid url for AlifJavascriptBridge
+		// AllowNavigationToInvalidURL
+		// https://github.com/WebKit/webkit/blob/9029c43e695bf886fffb15eec951f0605e34509b/Source/WebCore/page/DOMWindow.cpp
+
 	#endif
 
 	#ifdef AlifStudio_DisableSTC
@@ -1929,7 +1942,7 @@ Window_Main :: Window_Main() :
 		// صنف أداة نقر زر نص ملصق إظهار إخفاء تدمير عنوان نص تجميد عرض محتوى ارتفاع أفصول أرتوب 
 
 		obj_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف C++ واجهة_ويب _ج_ نافذة صنف دالة _س_ واجهة " + HTML_CSS_JS_Keywords_Bold + CPP_KEY_WORDS_Bold));
-			obj_CODE->StyleSetBold(wxSTC_LUA_WORD, true);
+			obj_CODE->StyleSetBold(wxSTC_LUA_WORD, false);
 
 		obj_CODE->SetKeyWords(1, wxT(" هدم بناء نقر رئيسية " + CPP_KEY_WORDS + HTML_CSS_JS_Keywords));
 			obj_CODE->StyleSetBold(wxSTC_LUA_WORD2, false);
@@ -2142,55 +2155,65 @@ Window_Main :: Window_Main() :
 
 	#elif  __APPLE__
 
-		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
+		// Code
+		AUI_MANAGER.AddPane(obj_CODE, 
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		// Files
+		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		// UI
+		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// WUI
+		AUI_MANAGER.AddPane(obj_WebUI,
+		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ويب ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(500,500).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Controls
+		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, 
 		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Propreties
+		AUI_MANAGER.AddPane(OBJ_PROPERTIES, 
 		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Log
+		AUI_MANAGER.AddPane(OBJ_LOG, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
-		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
+		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom());
 
 	#else
 
-		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
+		// Code
+		AUI_MANAGER.AddPane(obj_CODE, 
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		// Files
+		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
-
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
-		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
-		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		// UI
+		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// WUI
+		AUI_MANAGER.AddPane(obj_WebUI,
+		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ويب ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(500,500).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Controls
+		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, 
+		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Propreties
+		AUI_MANAGER.AddPane(OBJ_PROPERTIES, 
+		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Log
+		AUI_MANAGER.AddPane(OBJ_LOG, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
-		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
+		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom());
 
 	#endif
 	
@@ -2230,7 +2253,7 @@ Window_Main :: Window_Main() :
 		#ifdef _WIN32
 			Fixed_Path = "C:\\Alif\\";
 		#elif  __APPLE__
-			Fixed_Path = "/Applications/Alif Studio.app";
+			Fixed_Path = "/Applications";
 		#else
 			Fixed_Path = "/usr/local/bin/";
 		#endif
@@ -2600,6 +2623,8 @@ bool MyApp::OnInit()
 		//		/usr/local/share/aliflang/copyright
 		//		/usr/local/share/aliflang/linux_alif_version.inf
 		//		/usr/local/share/aliflang/Alif_Arabic_Programming_Language
+		//		/usr/share/aliflang/alifstudio.png
+		//		/usr/share/aliflang/alifstudio.ico
 
 		// aliflibwx_3.1-1.deb
 		//		/usr/local/include/aliflibwx/[wx][boost][utf8]
@@ -2722,11 +2747,12 @@ bool MyApp::OnInit()
 
 	#else
 
-		if (wxFileName::FileExists("/usr/share/alifstudio/alifstudio.png"))
+		if (wxFileName::FileExists("/usr/share/aliflang/alifstudio.png")) // /usr/share/alifstudio/alifstudio.png
 
 	#endif
 	{
 		wxBitmap bitmap;
+		
 		#ifdef _WIN32
 
 			if (bitmap.LoadFile(INSTALL_PATH + "alifstudio.png", wxBITMAP_TYPE_PNG))
@@ -2761,7 +2787,7 @@ bool MyApp::OnInit()
 
 		#else
 
-			if (bitmap.LoadFile("/usr/share/alifstudio/alifstudio.png", wxBITMAP_TYPE_PNG))
+			if (bitmap.LoadFile("/usr/share/aliflang/alifstudio.png", wxBITMAP_TYPE_PNG))
 			{
 				wxSplashScreen* Alif_Studio_Splash = new wxSplashScreen(bitmap, 
 																		wxSPLASH_CENTRE_ON_SCREEN | wxSPLASH_TIMEOUT, // wxSPLASH_NO_TIMEOUT
@@ -2800,9 +2826,9 @@ bool MyApp::OnInit()
 	// ------------------------------------------------
 	// Application Class -> Widget Constructor
 	// ------------------------------------------------
-	
-	OBJ_CLASS_WINDOW_MAIN = new Window_Main();
-	
+
+	OBJ_CLASS_WINDOW_MAIN = new Window_Main(); // TODO: Need fix Gtk send messagebox "File was not found"
+
 	#ifdef _WIN32
 		OBJ_CLASS_WINDOW_MAIN->SetLayoutDirection(wxLayout_RightToLeft);
 	#elif  __APPLE__
@@ -3220,6 +3246,13 @@ void Window_Main::CODE_CHANGE(wxStyledTextEvent& event)
 			CODE_ERROR_INDICATOR = false;
 		}
 
+		if (CURRENT_FILE_EXTENSION == "ALUSUS"){
+
+			// Pasring Alusus Code source
+			
+			return;
+		}
+
 		// AutoComplet List
 
 		// ----------------------------------------
@@ -3491,6 +3524,14 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
 	}
+	else if (CURRENT_FILE_EXTENSION == "ALUSUS")
+	{
+		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alusus", 
+		wxT("Alusus  ( * . alusus )|*.alusus"), wxFD_SAVE);
+
+		response = saveDialog->ShowModal();
+		Path = saveDialog->GetPath();
+	}
 	else
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alif", 
@@ -3517,8 +3558,10 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 				CURRENT_FILE_EXTENSION = "ALIFUI";
 			else if (fn.GetExt() == "alifuiw")
 				CURRENT_FILE_EXTENSION = "ALIFUIW";
-			else if (fn.GetExt() == "ALIFC")
+			else if (fn.GetExt() == "alifc")
 				CURRENT_FILE_EXTENSION = "ALIFC";
+			else if (fn.GetExt() == "alusus")
+				CURRENT_FILE_EXTENSION = "ALUSUS";
 			else
 			{
 				wxMessageBox("امتداد الملف غير معروف - " + fn.GetExt(), wxT("خطأ"), wxICON_WARNING);
@@ -3778,6 +3821,12 @@ void Window_Main::COMPILE(wxCommandEvent &event)
 
 bool Window_Main::COMPILE_NOW()
 {
+	// Alusus
+	//if(CURRENT_FILE_EXTENSION == "ALUSUS"){
+	//
+	//	return Alusus_Build();
+	//}
+	
 	// Check if GCC Path containe space
 	// because GCC, Windres don't work correctly
 	// if path containes blank spaces.
@@ -3917,6 +3966,10 @@ bool Window_Main::COMPILE_NOW()
 
 	#ifdef _WIN32
 
+		// Alusus don't support Windows!
+		if(CURRENT_FILE_EXTENSION == "ALUSUS")
+			return false;
+
 		// --------------------------------------
 		// Create Bath file
 		// --------------------------------------
@@ -3946,27 +3999,55 @@ bool Window_Main::COMPILE_NOW()
 		COMMAND.Append("\"");
 		
 	#else
-		// Remove Binary file
-		COMMAND = "rm -f \"";
-		COMMAND.Append(PATH_FULL_EXECUTABLE);
-		COMMAND.Append("\"");
-		wxExecute(COMMAND);
-		
-		// Remove Log file
-		COMMAND = "rm -f \"";
-		COMMAND.Append(PATH_FULL_LOG);
-		COMMAND.Append("\"");
-		wxExecute(COMMAND);
-		
-		COMMAND = "\"";
-		COMMAND.Append(PATH_FULL_ALIF_COMPILER);
-		COMMAND.Append("\" \"");
-		COMMAND.Append(PATH_FULL_SOURCE);
-		COMMAND.Append("\" \"");
-		COMMAND.Append(PATH_FULL_EXECUTABLE);
-		COMMAND.Append("\" \"");
-		COMMAND.Append(PATH_FULL_LOG);
-		COMMAND.Append("\" -workpath=" + FileName_Source.GetPath());
+		if(CURRENT_FILE_EXTENSION == "ALUSUS"){
+
+			// Alusus compile command
+			COMMAND = "x-terminal-emulator -e \"alusus " + PATH_FULL_SOURCE + " 2> " + PATH_FULL_LOG + "\"";
+			
+			// wxEXEC_ASYNC imidiat return
+			// wxEXEC_SYNC wait prog to exit
+			PID = wxExecute(COMMAND, OUTPUT_ARRAY, ERROR_ARRAY);
+
+			OBJ_LOG->Clear();
+			
+			if (wxFileName::FileExists(PATH_FULL_LOG)){
+
+				OBJ_LOG->LoadFile(PATH_FULL_LOG);
+				wxRemoveFile(PATH_FULL_LOG);
+			} else {
+
+				OBJ_LOG->AppendText(wxT("No logs to show. \n"));
+			}
+
+			return false; // Always return false because there no binary app to execute
+						  // when Alusus become able to produce binary app, then we need
+						  // extra work here.
+			
+		} else {
+
+			// Remove Binary file
+			COMMAND = "rm -f \"";
+			COMMAND.Append(PATH_FULL_EXECUTABLE);
+			COMMAND.Append("\"");
+			wxExecute(COMMAND);
+			
+			// Remove Log file
+			COMMAND = "rm -f \"";
+			COMMAND.Append(PATH_FULL_LOG);
+			COMMAND.Append("\"");
+			wxExecute(COMMAND);
+			
+			COMMAND = "\"";
+			COMMAND.Append(PATH_FULL_ALIF_COMPILER);
+			COMMAND.Append("\" \"");
+			COMMAND.Append(PATH_FULL_SOURCE);
+			COMMAND.Append("\" \"");
+			COMMAND.Append(PATH_FULL_EXECUTABLE);
+			COMMAND.Append("\" \"");
+			COMMAND.Append(PATH_FULL_LOG);
+			COMMAND.Append("\" -workpath=" + FileName_Source.GetPath());
+		}
+
 	#endif
 
 	#ifndef AlifStudio_DisableSTC
@@ -4529,7 +4610,7 @@ void Window_Main::OnNew(wxCommandEvent &event)
 	wxString Path;
 
 	wxFileDialog *saveDialog = new wxFileDialog(this, wxT("إنشاء ملف جديد"), PATH_DIRECTORY, wxT("New_Alif_File.alif"), // ملف_جديد
-		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
+		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc|Alusus  ( * . alusus )|*.alusus"), wxFD_SAVE);
 
 	response = saveDialog->ShowModal();
 	
@@ -4598,7 +4679,7 @@ void Window_Main::OnNew(wxCommandEvent &event)
 		{
 			CURRENT_FILE_EXTENSION = "ALIFUIW";
 
-			obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+			obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
 
 			SAMPLE_CODE = wxT(R"( 
 <html>
@@ -4606,7 +4687,7 @@ void Window_Main::OnNew(wxCommandEvent &event)
 </html>
  )" );
 		}
-		else if (fn.GetExt() == "ALIFC")
+		else if (fn.GetExt() == "alifc")
 		{
 			CURRENT_FILE_EXTENSION = "ALIFC";
 
@@ -4736,6 +4817,17 @@ void MyFunction(wxString msg, double foo, double bar){
 }
  )" );
 
+		}
+		else if (fn.GetExt() == "alusus")
+		{
+			CURRENT_FILE_EXTENSION = "ALUSUS";
+
+			obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+
+			SAMPLE_CODE = wxT(R"( 
+import "Srl/Console.alusus";
+Srl.Console.print("Hello World! \n");
+ )" );
 		}
 		else
 		{
@@ -5304,6 +5396,24 @@ void SET_TREE_FILES_LIST()
 			TREE_ID_FILES_ITEM[i] = OBJ_TREE_FILES_LIST->AppendItem(TREE_ID_FILES_ROOT, 
 			fname.GetName() + wxT(" . C++"), 3, 3);
 			TREE_FILES_TYPE[i] = "ALIFC";
+			TREE_FILES_PATH[i] = PATH_DIRECTORY + FILENAME;
+			TREE_FILES_TOTAL_ITEM++;
+			i++;
+			NEXT = OBJ_DIR.GetNext(&FILENAME);
+		}
+	}
+
+	// *.alusus
+	FILE_EXTENSION = wxT("*.alusus");
+	NEXT = OBJ_DIR.GetFirst(&FILENAME, FILE_EXTENSION, wxDIR_FILES);
+	while ( NEXT )
+	{
+		if (FILENAME != "")
+		{
+			wxFileName fname( FILENAME );
+			TREE_ID_FILES_ITEM[i] = OBJ_TREE_FILES_LIST->AppendItem(TREE_ID_FILES_ROOT, 
+			fname.GetName() + wxT(" . الأسس"), 1, 1);
+			TREE_FILES_TYPE[i] = "ALUSUS";
 			TREE_FILES_PATH[i] = PATH_DIRECTORY + FILENAME;
 			TREE_FILES_TOTAL_ITEM++;
 			i++;
@@ -6088,6 +6198,32 @@ void UI_MANAGER(unsigned int ID_FILE)
 		// Hide Aui Designer Panels / UI Web
 		UI_DesignerShow(false, false);
 	}
+	else if (EXTENSION == "ALUSUS")
+	{
+		// Alusus Script
+
+		obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+
+		#ifndef AlifStudio_DisableSTC
+			obj_CODE->SetLexer(wxSTC_LEX_LUA);
+		#endif
+
+		// UI Initilizing
+		UI_BUTTON_SAVE(true);
+		UI_BUTTON_BUILD(true);
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->Clear();
+		#else
+			obj_CODE->ClearAll();
+		#endif
+		obj_CODE->Enable(true);
+		obj_CODE->SetEditable(true);
+
+		obj_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
+
+		// Hide Aui Designer Panels / UI Web
+		UI_DesignerShow(false, false);
+	}
 	else
 	{
 		// Alif Source Code
@@ -6260,3 +6396,20 @@ void SET_NEW_FILE(wxString PATH)
 		obj_CODE->SetSavePoint();
 	#endif
 }
+
+// ---------------------
+// Alusus methods
+// ---------------------
+/*
+bool Alusus_Build(){
+
+	// TODO: Alusus --> Check if alusus cmd is okay
+
+	// Check if there a code..
+	if (obj_CODE->IsEmpty()){
+
+		wxMessageBox(wxT("لاتوجد شيفرة للترجمة !"), wxT("ترجمة"), wxICON_EXCLAMATION);
+		return false;
+	}
+}
+*/
