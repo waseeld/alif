@@ -120,11 +120,11 @@ using namespace std;
 // IDE Version
 // ------------------------------------------------
 
-const static wxString Alif_Studio_Version = wxT("2.0 Beta 1");
+const static wxString Alif_Studio_Version = wxT("2.0.4");
 wxString Alif_Compiler_Version = wxT("0");
 
 // ------------------------------------------------
-// Todo list
+// Todo list - Alif lang.
 // ------------------------------------------------
 
 // TODO: When click on STC, last find_position must be updated imidiatly.
@@ -577,6 +577,8 @@ wxTreeCtrl* OBJ_TREE_CONTROLS;
 wxPropertyGrid* OBJ_PROPERTIES;
 
 wxWebView* obj_WebUI;
+
+string XML_Path;
 
 // --------------------------------
 // DrawPanel Definition
@@ -1110,7 +1112,7 @@ void OPEN_NEW_FILE(wxString FILE_PATH)
 			CURRENT_FILE_EXTENSION = "ALIF";
 		else if (fn.GetExt() == "alifui")
 			CURRENT_FILE_EXTENSION = "ALIFUI";
-		else if (fn.GetExt() == "ALIFC")
+		else if (fn.GetExt() == "alifc")
 			CURRENT_FILE_EXTENSION = "ALIFC";
 		else
 		{
@@ -1504,20 +1506,152 @@ Window_Main :: Window_Main() :
 	TREE_ID_CONTROL_ITEM_LABEL = OBJ_TREE_CONTROLS->AppendItem(TREE_ID_CONTROL_ROOT, wxT(" ملصق "), 3, 3);
 	
 	OBJ_TREE_CONTROLS->ExpandAll();
-	
+
 	// ---------------------------
-	// Splitter Construction
+	// XML Theme load
 	// ---------------------------
-	
-	//OBJ_MAIN_SIZER = new wxBoxSizer(wxHORIZONTAL);
-	//OBJ_CODE_SIZER = new wxBoxSizer(wxHORIZONTAL);
-	//OBJ_LOG_SIZER = new wxBoxSizer(wxHORIZONTAL);
-	//OBJ_MAIN_SPLITTER = new wxSplitterWindow(this, wxID_ANY);
-	//OBJ_PANEL_1 = new wxPanel(OBJ_MAIN_SPLITTER, wxID_ANY);
-	//OBJ_PANEL_2 = new wxPanel(OBJ_MAIN_SPLITTER, wxID_ANY);
-	
+
+	// Default Theme
+	string UI_Theme_Name = "Alif_Dark"; // Alif_Light | Alif_Dark
+
+	// Default colors
+	string Color_STRING = "#A4C08C"; // {164,192,140};
+	string Color_NUMBER = "#D7693D"; // {215,105,61};
+	string Color_COMMENT = "#AAB0BE"; // {170,176,190};
+	string Color_CODE = "#5A6670"; // {90,102,112};
+	string Color_OPERATOR = "#C56B74"; // {197,107,116};
+	string Color_WORD = "#CC7B84"; // {204,123,132};
+	string Color_WORD2 = "#AC74B1"; // {172,116,177};
+	string Color_WORD3 = "#5B8EC8"; // {91,142,200};
+	string Color_WORD4 = "#AC74B1"; // ""; // {172,116,177};
+	string Color_ERROR = "#C56B74"; // {197,107,116};
+	string Color_Line_BG = "#F7F8F9"; // {247,248,249};
+	string Color_BG = "#FAFBFC"; // {250, 251, 252};
+	string Color_FG = "#32363A"; // {50, 54, 58};
+	string Color_LINENUMBER_FG = "#A7B0C7"; // 167, 176, 199
+	string Color_LINENUMBER_BG = "#EFF1F5"; // 239, 241, 245
+
+	// Default font
+	#ifdef _WIN32
+		string XML_FontSize = "13";
+		string XML_FontName = "Courier New";
+	#elif  __APPLE__
+		string XML_FontSize = "18";
+		string XML_FontName = "Al Bayan";
+	#else
+		string XML_FontSize = "14";
+		string XML_FontName = "Courier New";
+	#endif
+
+	// Load XML file
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(XML_Path.c_str());
+
+	if (result){
+
+		for(auto Alif_Theme: doc.child("attributes").children("Alif_Theme")){
+
+			if (UI_Theme_Name == Alif_Theme.attribute("name").as_string()){
+
+				Color_STRING = Alif_Theme.child("Color_STRING").text().as_string();
+				Color_NUMBER = Alif_Theme.child("Color_NUMBER").text().as_string();
+				Color_COMMENT = Alif_Theme.child("Color_COMMENT").text().as_string();
+				Color_CODE = Alif_Theme.child("Color_CODE").text().as_string();
+				Color_OPERATOR = Alif_Theme.child("Color_OPERATOR").text().as_string();
+				Color_WORD = Alif_Theme.child("Color_WORD").text().as_string();
+				Color_WORD2 = Alif_Theme.child("Color_WORD2").text().as_string();
+				Color_WORD3 = Alif_Theme.child("Color_WORD3").text().as_string();
+				Color_WORD4 = Alif_Theme.child("Color_WORD4").text().as_string();
+				Color_ERROR = Alif_Theme.child("Color_ERROR").text().as_string();
+				Color_Line_BG = Alif_Theme.child("Color_Line_BG").text().as_string();
+				Color_BG = Alif_Theme.child("Color_BG").text().as_string();
+				Color_FG = Alif_Theme.child("Color_FG").text().as_string();
+				Color_LINENUMBER_FG = Alif_Theme.child("Color_LINENUMBER_FG").text().as_string();
+				Color_LINENUMBER_BG = Alif_Theme.child("Color_LINENUMBER_BG").text().as_string();
+
+				XML_FontName = Alif_Theme.child("Font").text().as_string();
+				XML_FontSize = Alif_Theme.child("Font_Size").text().as_string();
+
+				break;
+			}
+		}
+
+	} else {
+
+		// No XML file, use default colors.
+		// Colors values already initialized, 
+		// so nothing to do.
+
+		//wxMessageBox( result.description() );
+		wxMessageBox(wxT(" الملف التالي غير موجود \n \n ") + 
+					XML_Path + 
+					wxT(" \n \n المرجو اعادت ثتبيت البرنامج \n او تحميله من الموقع الرسمي \n \n www.aliflang.org"));
+	}
+
+	/*
+	// Update XML (testing)
+	pugi::xml_document xml_doc;
+	pugi::xml_parse_result xml_result = xml_doc.load_file("/usr/local/share/alifstudio/alifstudio_settings.xml");
+
+	if (xml_result){
+
+		/ *
+		//pugi::xml_attribute xml_rattr = xml_doc.attribute("Alif_Studio_Settings");
+		auto xml_rattr = xml_doc.child("attributes").children("Alif_Studio_Settings_Attribute");
+
+		// Get val
+		string xx = xml_rattr.;
+		string yy = xml_rattr.child("Color_STRING").text().as_string();
+
+		// New val
+		xml_rattr.set_name("key");
+		xml_rattr.set_value("345");
+
+		// Save
+		xml_doc.save_file("/usr/local/share/alifstudio/alifstudio_settings.xml");
+		* /
+
+		/ *
+		<?xml version="1.0"?>
+		<node>
+			<param value='123'/>
+		</node>
+		* /
+
+		pugi::xml_node xml_node = xml_doc.child("node");
+
+		pugi::xml_attribute attr = xml_node.attribute("aaa");
+		attr.set_value("000");
+
+		//pugi::xml_node xml_node = xml_doc.child("node");
+
+		//pugi::xml_attribute attr = xml_node.attribute("id");
+		//attr.set_value("345");
+
+		//pugi::xml_attribute param = xml_node.attribute("param");
+		//param.set_value("345");
+
+		//string vv = xml_node.child("description").text().as_string();
+		//wxMessageBox(vv);
+
+		//pugi::xml_attribute attr = xml_node.attribute("id");
+		//attr.set_value("345");
+
+		//pugi::xml_node xml_des = xml_node.child("description");
+		//xml_des.empty();
+
+		//pugi::xml_attribute xml_attr = xml_node.attribute("id");
+		//xml_attr.set_name("key");
+		//xml_attr.set_value("345");
+		//xml_node.set_name("notnode");
+
+		xml_doc.save_file("/usr/local/share/alifstudio/alifstudio_settings.xml");
+		wxMessageBox("up done");
+	}
+	*/
+
 	// ---------------------------
-	// Code Text Construction
+	// Code Construction
 	// ---------------------------
 	
 	#ifdef _WIN32
@@ -1535,12 +1669,12 @@ Window_Main :: Window_Main() :
 		obj_CODE->SetCodePage(wxSTC_CP_UTF8);
 		
  		//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
-		wxFont CODE_FONT (13,
+		wxFont CODE_FONT (CONVERT_STRING_TO_INT(XML_FontSize),
 		wxFONTFAMILY_SWISS, // wxFONTFAMILY_SWISS
 		wxFONTSTYLE_NORMAL, // wxFONTSTYLE_ITALIC
 		wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 		false, // 
-		"Courier New");
+		XML_FontName);
  		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
 		
 	#elif  __APPLE__
@@ -1555,12 +1689,12 @@ Window_Main :: Window_Main() :
 			obj_CODE->Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(Window_Main::CODE_KEYDOWN), NULL, this);
 			//obj_CODE->Connect(wxEVT_TEXT, wxCommandEventHandler(Window_Main::CODE_CHARADDED), NULL, this);
 
-			wxFont* CODE_FONT = new wxFont(18,
+			wxFont* CODE_FONT = new wxFont(CONVERT_STRING_TO_INT(XML_FontSize),
 			wxFONTFAMILY_MODERN, // wxFONTFAMILY_SWISS
 			wxFONTSTYLE_NORMAL, // wxFONTSTYLE_ITALIC
 			wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 			false, // 
-			"Courier New");
+			XML_FontName);
 			obj_CODE->SetFont(*CODE_FONT);
 
 		#else
@@ -1579,32 +1713,18 @@ Window_Main :: Window_Main() :
 			obj_CODE->SetCodePage(wxSTC_CP_UTF8);
 			
 			//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
-			wxFont CODE_FONT (20,
+			wxFont CODE_FONT (CONVERT_STRING_TO_INT(XML_FontSize),
 			wxFONTFAMILY_DEFAULT, // wxFONTFAMILY_SWISS
 			wxFONTSTYLE_NORMAL, // wxFONTSTYLE_ITALIC
 			wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 			false, // 
-			"Al Bayan"); // Courier New
+			XML_FontName); // Courier New
 			obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
 
 		#endif
 		
 	#else
 		// Linux
-
-		/*    this saved, maybe help when using SCINTILLA on Linux, this is kanet dyal txtctrl lol
-			
-		obj_CODE = new wxTextCtrl(OBJ_PANEL_1, ID_CODE, wxT(""), wxPoint(0, 0), 
-		wxSize(600, 10000), wxTE_MULTILINE | wxBORDER_NONE | wxTE_NO_VSCROLL | 
-		wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB);
-		*/
-			
-		//wxTE_RIGHT | wxALIGN_RIGHT
-		//wxTE_NO_VSCROLL | wxBORDER_NONE | wxTE_PROCESS_ENTER
-		//EM_SETBIDIOPTIONS | EM_SETEDITSTYLE
-		//WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR | WS_EX_LAYOUTRTL
-		//wxHSCROLL | wxTE_RICH2 | wxTE_RIGHT
-		//obj_CODE->SetLayoutDirection(wxLayout_RightToLeft);
 
 		obj_CODE = new wxStyledTextCtrl(this, ID_CODE, wxPoint(0, 0), wxSize(500, 200), 
 		wxTE_MULTILINE | wxWANTS_CHARS | wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB |  wxBORDER_NONE | wxVERTICAL |
@@ -1618,17 +1738,36 @@ Window_Main :: Window_Main() :
 
 		obj_CODE->StyleSetCharacterSet(0, wxSTC_CHARSET_ARABIC); // Only Windows, GTK not.
 		obj_CODE->SetCodePage(wxSTC_CP_UTF8);
-			
+		
  		//wxFont font(12,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_NORMAL);
-		wxFont CODE_FONT (13,
-		wxFONTFAMILY_DEFAULT, // wxFONTFAMILY_SWISS
+		wxFont CODE_FONT (CONVERT_STRING_TO_INT(XML_FontSize),
+		wxFONTFAMILY_DEFAULT, // wxFontFamily --> wxFONTFAMILY_SWISS | wxFONTFAMILY_SCRIPT | wxFONTFAMILY_TELETYPE
 		wxFONTSTYLE_NORMAL, // wxFONTSTYLE_ITALIC
 		wxFONTWEIGHT_NORMAL, // wxFONTWEIGHT_NORMAL / wxFONTWEIGHT_BOLD
 		false, // 
-		"Courier New");
- 		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
-	#endif
+		XML_FontName); // "Courier New, Noto Kufi Arabic" | monospace "FreeMono"
 
+ 		obj_CODE->StyleSetFont(wxSTC_STYLE_DEFAULT, CODE_FONT);
+
+		obj_CODE->SetExtraDescent(8); // Line height
+		
+		// TODO: We need allow invalid url for AlifJavascriptBridge
+		// AllowNavigationToInvalidURL
+		// https://github.com/WebKit/webkit/blob/9029c43e695bf886fffb15eec951f0605e34509b/Source/WebCore/page/DOMWindow.cpp
+
+	#endif
+	
+	// ---------------------------
+	// Code settings/Theme/Colors
+	// ---------------------------
+	
+	//OBJ_MAIN_SIZER = new wxBoxSizer(wxHORIZONTAL);
+	//OBJ_CODE_SIZER = new wxBoxSizer(wxHORIZONTAL);
+	//OBJ_LOG_SIZER = new wxBoxSizer(wxHORIZONTAL);
+	//OBJ_MAIN_SPLITTER = new wxSplitterWindow(this, wxID_ANY);
+	//OBJ_PANEL_1 = new wxPanel(OBJ_MAIN_SPLITTER, wxID_ANY);
+	//OBJ_PANEL_2 = new wxPanel(OBJ_MAIN_SPLITTER, wxID_ANY);
+	
 	#ifdef AlifStudio_DisableSTC
 
 		// --------------------------------------
@@ -1646,67 +1785,6 @@ Window_Main :: Window_Main() :
 		// --------------------------------------
 
 		obj_CODE->SetSTCFocus(true);
-
-		// XML Theme
-		
-		// Default Theme
-		string UI_Theme_Name = "Alif_Light"; // Alif_Light | Alif_Dracula
-		string Color_STRING = "#A4C08C"; // {164,192,140};
-		string Color_NUMBER = "#D7693D"; // {215,105,61};
-		string Color_COMMENT = "#AAB0BE"; // {170,176,190};
-		string Color_CODE = "#5A6670"; // {90,102,112};
-		string Color_OPERATOR = "#C56B74"; // {197,107,116};
-		string Color_WORD = "#CC7B84"; // {204,123,132};
-		string Color_WORD2 = "#AC74B1"; // {172,116,177};
-		string Color_WORD3 = "#5B8EC8"; // {91,142,200};
-		string Color_WORD4 = "#AC74B1"; // ""; // {172,116,177};
-		string Color_ERROR = "#C56B74"; // {197,107,116};
-		string Color_Line_BG = "#F7F8F9"; // {247,248,249};
-		string Color_BG = "#FAFBFC"; // {250, 251, 252};
-		string Color_FG = "#32363A"; // {50, 54, 58};
-		string Color_LINENUMBER_FG = "#A7B0C7"; // 167, 176, 199
-		string Color_LINENUMBER_BG = "#EFF1F5"; // 239, 241, 245
-
-		string XML_Path = INSTALL_PATH + "alifstudio_theme.xml";
-
-		pugi::xml_document doc;
-    	pugi::xml_parse_result result = doc.load_file(XML_Path.c_str());
-
-    	if (result){
-
-			for(auto Alif_Theme: doc.child("attributes").children("Alif_Theme")){
-
-				if (UI_Theme_Name == Alif_Theme.attribute("name").as_string()){
-
-					Color_STRING = Alif_Theme.child("Color_STRING").text().as_string();
-					Color_NUMBER = Alif_Theme.child("Color_NUMBER").text().as_string();
-					Color_COMMENT = Alif_Theme.child("Color_COMMENT").text().as_string();
-					Color_CODE = Alif_Theme.child("Color_CODE").text().as_string();
-					Color_OPERATOR = Alif_Theme.child("Color_OPERATOR").text().as_string();
-					Color_WORD = Alif_Theme.child("Color_WORD").text().as_string();
-					Color_WORD2 = Alif_Theme.child("Color_WORD2").text().as_string();
-					Color_WORD3 = Alif_Theme.child("Color_WORD3").text().as_string();
-					Color_WORD4 = Alif_Theme.child("Color_WORD4").text().as_string();
-					Color_ERROR = Alif_Theme.child("Color_ERROR").text().as_string();
-					Color_Line_BG = Alif_Theme.child("Color_Line_BG").text().as_string();
-					Color_BG = Alif_Theme.child("Color_BG").text().as_string();
-					Color_FG = Alif_Theme.child("Color_FG").text().as_string();
-					Color_LINENUMBER_FG = Alif_Theme.child("Color_LINENUMBER_FG").text().as_string();
-					Color_LINENUMBER_BG = Alif_Theme.child("Color_LINENUMBER_BG").text().as_string();
-
-					break;
-				}
-			}
-
-		} else {
-
-			// No XML file, use default colors.
-			// Colors values already initialized, 
-			// so nothing to do.
-			wxMessageBox( result.description() );
-		}
-
-		// --------------------------------------
 		
 		enum{
 
@@ -1928,8 +2006,8 @@ Window_Main :: Window_Main() :
 		// ألف أضف C++ رئيسية ـسـ  واجهة خاص نهاية كلما نافذة دالة عدد نص كائن إذا و أو سطر رجوع
 		// صنف أداة نقر زر نص ملصق إظهار إخفاء تدمير عنوان نص تجميد عرض محتوى ارتفاع أفصول أرتوب 
 
-		obj_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف C++ واجهة_ويب _ج_ نافذة صنف دالة _س_ واجهة " + HTML_CSS_JS_Keywords_Bold + CPP_KEY_WORDS_Bold));
-			obj_CODE->StyleSetBold(wxSTC_LUA_WORD, true);
+		obj_CODE->SetKeyWords(0, wxT(" ألف طرفية أضف C++ واجهة_ويب _ج_ نافذة صنف دالة _س_ واجهة البايثون_مسار_عناوين البايثون_مسار_مكتبات البايثون_مكتبات " + HTML_CSS_JS_Keywords_Bold + CPP_KEY_WORDS_Bold));
+			obj_CODE->StyleSetBold(wxSTC_LUA_WORD, false);
 
 		obj_CODE->SetKeyWords(1, wxT(" هدم بناء نقر رئيسية " + CPP_KEY_WORDS + HTML_CSS_JS_Keywords));
 			obj_CODE->StyleSetBold(wxSTC_LUA_WORD2, false);
@@ -1937,7 +2015,7 @@ Window_Main :: Window_Main() :
 		obj_CODE->SetKeyWords(2, wxT(" أداة زر ملصق كلما عدد متغير ثابت منطق نص كائن إذا و أو وإلا نهاية "));
 			obj_CODE->StyleSetBold(wxSTC_LUA_WORD3, false);
 
-		obj_CODE->SetKeyWords(3, wxT(" سطر كسر إرجاع صحيح خطأ خاص "));
+		obj_CODE->SetKeyWords(3, wxT(" سطر كسر إرجاع صحيح خطأ خاص أظف_أمر_ترجمة أظف_أمر_ربط مكتبة ، "));
 			obj_CODE->StyleSetBold(wxSTC_LUA_WORD4, false);
 		
 		// - For future use -
@@ -2142,55 +2220,65 @@ Window_Main :: Window_Main() :
 
 	#elif  __APPLE__
 
-		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
+		// Code
+		AUI_MANAGER.AddPane(obj_CODE, 
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		// Files
+		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		// UI
+		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// WUI
+		AUI_MANAGER.AddPane(obj_WebUI,
+		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ويب ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(500,500).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Controls
+		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, 
 		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Propreties
+		AUI_MANAGER.AddPane(OBJ_PROPERTIES, 
 		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Log
+		AUI_MANAGER.AddPane(OBJ_LOG, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
-		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
+		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom());
 
 	#else
 
-		AUI_MANAGER.AddPane(obj_CODE, //wxCENTER);
+		// Code
+		AUI_MANAGER.AddPane(obj_CODE, 
 		wxAuiPaneInfo().CaptionVisible(false).CloseButton(false).BestSize(wxSize(wxDefaultCoord,wxDefaultCoord)).
 		MinSize(100,100).MaxSize(wxDefaultCoord,wxDefaultCoord).Resizable(false).Floatable(false).Center() );
-		
-		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, //wxLEFT, 
+		// Files
+		AUI_MANAGER.AddPane(OBJ_TREE_FILES_LIST, 
 		wxAuiPaneInfo().Caption(wxT(" المـلـفـات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
 		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Left() );
-
-		AUI_MANAGER.AddPane(OBJ_PROPERTIES, //wxRIGHT, 
-		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-
-		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, //wxRIGHT, 
-		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-
-		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, //wxLEFT, 
+		// UI
+		AUI_MANAGER.AddPane(OBJ_TREE_WINDOW, 
 		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
-		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right() );
-		
-		AUI_MANAGER.AddPane(OBJ_LOG, //wxBOTTOM, 
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// WUI
+		AUI_MANAGER.AddPane(obj_WebUI,
+		wxAuiPaneInfo().Caption(wxT(" الـواجـهـة ويب ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Controls
+		AUI_MANAGER.AddPane(OBJ_TREE_CONTROLS, 
+		wxAuiPaneInfo().Caption(wxT(" الأداوات ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Propreties
+		AUI_MANAGER.AddPane(OBJ_PROPERTIES, 
+		wxAuiPaneInfo().Caption(wxT(" الـخـصـائـص ")).CloseButton(false).BestSize(wxSize(200,wxDefaultCoord)).
+		MinSize(50,50).MaxSize(500,500).Resizable(true).Floatable(true).Right());
+		// Log
+		AUI_MANAGER.AddPane(OBJ_LOG, 
 		wxAuiPaneInfo().Caption(wxT(" الـرسـائـل ")).CloseButton(false).BestSize(wxSize(wxDefaultCoord,100)).
-		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom() );
+		MinSize(50,50).MaxSize(wxDefaultCoord,500).Resizable(true).Floatable(true).Bottom());
 
 	#endif
 	
@@ -2230,7 +2318,7 @@ Window_Main :: Window_Main() :
 		#ifdef _WIN32
 			Fixed_Path = "C:\\Alif\\";
 		#elif  __APPLE__
-			Fixed_Path = "/Applications/Alif Studio.app";
+			Fixed_Path = "/Applications";
 		#else
 			Fixed_Path = "/usr/local/bin/";
 		#endif
@@ -2426,6 +2514,7 @@ bool MyApp::OnInit()
 		PATH_FULL_UPDATE = INSTALL_PATH + "mupdate.exe";
 		NEW_UPDATER_PATH = INSTALL_PATH + "_mupdate.exe";
 		PATH_FULL_PDF = INSTALL_PATH + "Alif_Arabic_Programming_Language.pdf";
+		XML_Path = INSTALL_PATH + "alifstudio_theme.xml";
 
 		// C:\Users\test\AppData\Local
 		wxFileName tfname(wxStandardPaths::Get().GetTempDir());
@@ -2517,6 +2606,7 @@ bool MyApp::OnInit()
 		PATH_FULL_UPDATE = "/Library/Application Support/Aliflang/Alif_Studio/mupdate";
 		NEW_UPDATER_PATH = "/Library/Application Support/Aliflang/Alif_Studio/_mupdate";
 		PATH_FULL_PDF = "/Library/Application Support/Aliflang/Alif_Compiler/Alif_Arabic_Programming_Language.pdf";
+		XML_Path = "/Library/Application Support/Aliflang/Alif_Studio/alifstudio_theme.xml";
 
 		// /var/tmp
 		wxFileName tfname(wxStandardPaths::Get().GetTempDir());
@@ -2600,6 +2690,8 @@ bool MyApp::OnInit()
 		//		/usr/local/share/aliflang/copyright
 		//		/usr/local/share/aliflang/linux_alif_version.inf
 		//		/usr/local/share/aliflang/Alif_Arabic_Programming_Language
+		//		/usr/share/aliflang/alifstudio.png
+		//		/usr/share/aliflang/alifstudio.ico
 
 		// aliflibwx_3.1-1.deb
 		//		/usr/local/include/aliflibwx/[wx][boost][utf8]
@@ -2623,6 +2715,7 @@ bool MyApp::OnInit()
 		PATH_FULL_UPDATE = INSTALL_PATH + "mupdate";
 		NEW_UPDATER_PATH = INSTALL_PATH + "_mupdate";
 		PATH_FULL_PDF = "/usr/local/share/aliflang/Alif_Arabic_Programming_Language.pdf";
+		XML_Path = "/usr/local/share/alifstudio/alifstudio_theme.xml";
 
 		// /var/tmp
 		wxFileName tfname(wxStandardPaths::Get().GetTempDir());
@@ -2722,11 +2815,12 @@ bool MyApp::OnInit()
 
 	#else
 
-		if (wxFileName::FileExists("/usr/share/alifstudio/alifstudio.png"))
+		if (wxFileName::FileExists("/usr/share/aliflang/alifstudio.png")) // /usr/share/alifstudio/alifstudio.png
 
 	#endif
 	{
 		wxBitmap bitmap;
+		
 		#ifdef _WIN32
 
 			if (bitmap.LoadFile(INSTALL_PATH + "alifstudio.png", wxBITMAP_TYPE_PNG))
@@ -2761,7 +2855,7 @@ bool MyApp::OnInit()
 
 		#else
 
-			if (bitmap.LoadFile("/usr/share/alifstudio/alifstudio.png", wxBITMAP_TYPE_PNG))
+			if (bitmap.LoadFile("/usr/share/aliflang/alifstudio.png", wxBITMAP_TYPE_PNG))
 			{
 				wxSplashScreen* Alif_Studio_Splash = new wxSplashScreen(bitmap, 
 																		wxSPLASH_CENTRE_ON_SCREEN | wxSPLASH_TIMEOUT, // wxSPLASH_NO_TIMEOUT
@@ -2800,9 +2894,9 @@ bool MyApp::OnInit()
 	// ------------------------------------------------
 	// Application Class -> Widget Constructor
 	// ------------------------------------------------
-	
-	OBJ_CLASS_WINDOW_MAIN = new Window_Main();
-	
+
+	OBJ_CLASS_WINDOW_MAIN = new Window_Main(); // TODO: Need fix Gtk send messagebox "File was not found"
+
 	#ifdef _WIN32
 		OBJ_CLASS_WINDOW_MAIN->SetLayoutDirection(wxLayout_RightToLeft);
 	#elif  __APPLE__
@@ -3470,7 +3564,7 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 	if (CURRENT_FILE_EXTENSION == "ALIFUI")
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifui", 
-		wxT("واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
+		wxT("واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|C++  ( * . alifc )|*.alifc|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
@@ -3478,7 +3572,7 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 	else if (CURRENT_FILE_EXTENSION == "ALIFUIW")
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifuiw", 
-		wxT("واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
+		wxT("واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|C++  ( * . alifc )|*.alifc|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
@@ -3486,7 +3580,15 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 	else if (CURRENT_FILE_EXTENSION == "ALIFC")
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifc", 
-		wxT("C++  ( * . alifc )|*.alifc|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif"), wxFD_SAVE);
+		wxT("C++  ( * . alifc )|*.alifc|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
+
+		response = saveDialog->ShowModal();
+		Path = saveDialog->GetPath();
+	}
+	else if (CURRENT_FILE_EXTENSION == "ALIFLIB")
+	{
+		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alifc", 
+		wxT("مكتبة  ( * . aliflib )|*.aliflib|C++  ( * . alifc )|*.alifc|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|ألف  ( * . alif )|*.alif"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
@@ -3494,7 +3596,7 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 	else
 	{
 		wxFileDialog *saveDialog = new wxFileDialog(this, wxT("حفظ الملف"), PATH_DIRECTORY, SOURCE_FILE_NAME + ".alif", 
-		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
+		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
 
 		response = saveDialog->ShowModal();
 		Path = saveDialog->GetPath();
@@ -3517,8 +3619,10 @@ void Window_Main::OnSaveAs(wxCommandEvent &event)
 				CURRENT_FILE_EXTENSION = "ALIFUI";
 			else if (fn.GetExt() == "alifuiw")
 				CURRENT_FILE_EXTENSION = "ALIFUIW";
-			else if (fn.GetExt() == "ALIFC")
+			else if (fn.GetExt() == "alifc")
 				CURRENT_FILE_EXTENSION = "ALIFC";
+			else if (fn.GetExt() == "aliflib")
+				CURRENT_FILE_EXTENSION = "ALIFLIB";
 			else
 			{
 				wxMessageBox("امتداد الملف غير معروف - " + fn.GetExt(), wxT("خطأ"), wxICON_WARNING);
@@ -3946,6 +4050,7 @@ bool Window_Main::COMPILE_NOW()
 		COMMAND.Append("\"");
 		
 	#else
+
 		// Remove Binary file
 		COMMAND = "rm -f \"";
 		COMMAND.Append(PATH_FULL_EXECUTABLE);
@@ -3967,6 +4072,7 @@ bool Window_Main::COMPILE_NOW()
 		COMMAND.Append("\" \"");
 		COMMAND.Append(PATH_FULL_LOG);
 		COMMAND.Append("\" -workpath=" + FileName_Source.GetPath());
+		
 	#endif
 
 	#ifndef AlifStudio_DisableSTC
@@ -4400,6 +4506,9 @@ void Window_Main::OnOpen(wxCommandEvent &event)
 			if (TREE_WINDOW_TOTAL_ITEM > 0)
 				OBJ_TREE_WINDOW->DeleteAllItems();
 			
+			// Hide UI Web
+			UI_DesignerShow(false, false);
+
 			// Initilizing
 			UI_EMPTY_SETTINGS();
 
@@ -4529,7 +4638,7 @@ void Window_Main::OnNew(wxCommandEvent &event)
 	wxString Path;
 
 	wxFileDialog *saveDialog = new wxFileDialog(this, wxT("إنشاء ملف جديد"), PATH_DIRECTORY, wxT("New_Alif_File.alif"), // ملف_جديد
-		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc"), wxFD_SAVE);
+		wxT("ألف  ( * . alif )|*.alif|واجهة  ( * . alifui )|*.alifui|واجهة ويب  ( * . alifuiw )|*.alifuiw|C++  ( * . alifc )|*.alifc|مكتبة  ( * . aliflib )|*.aliflib"), wxFD_SAVE);
 
 	response = saveDialog->ShowModal();
 	
@@ -4598,7 +4707,7 @@ void Window_Main::OnNew(wxCommandEvent &event)
 		{
 			CURRENT_FILE_EXTENSION = "ALIFUIW";
 
-			obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+			obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
 
 			SAMPLE_CODE = wxT(R"( 
 <html>
@@ -4606,7 +4715,46 @@ void Window_Main::OnNew(wxCommandEvent &event)
 </html>
  )" );
 		}
-		else if (fn.GetExt() == "ALIFC")
+		else if (fn.GetExt() == "aliflib")
+				{
+					CURRENT_FILE_EXTENSION = "ALIFLIB";
+
+					obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+
+					SAMPLE_CODE = wxT(R"( 
+#ألف
+
+صنف الحساب
+
+	خاص عدد ا = 1
+	خاص عدد ب = 2
+	عدد		م = ا + ب
+
+	دالة بناء(عدد ع1، عدد ع2)
+
+			ا = ع1
+			ب = ع2
+
+	نهاية دالة
+
+	دالة عدد المجموع
+
+			م = ا + ب
+			إرجاع	م
+
+	نهاية دالة
+
+   دالة هدم
+
+      رسالة( "هذا الكائن ثم تدميره بنجاح !" )
+
+  نهاية دالة
+
+نهاية صنف
+
+		)" );
+				}
+		else if (fn.GetExt() == "alifc")
 		{
 			CURRENT_FILE_EXTENSION = "ALIFC";
 
@@ -5304,6 +5452,25 @@ void SET_TREE_FILES_LIST()
 			TREE_ID_FILES_ITEM[i] = OBJ_TREE_FILES_LIST->AppendItem(TREE_ID_FILES_ROOT, 
 			fname.GetName() + wxT(" . C++"), 3, 3);
 			TREE_FILES_TYPE[i] = "ALIFC";
+			TREE_FILES_PATH[i] = PATH_DIRECTORY + FILENAME;
+			TREE_FILES_TOTAL_ITEM++;
+			i++;
+			NEXT = OBJ_DIR.GetNext(&FILENAME);
+		}
+	}
+
+	// *.aliflib
+	
+	FILE_EXTENSION = wxT("*.aliflib");
+	NEXT = OBJ_DIR.GetFirst(&FILENAME, FILE_EXTENSION, wxDIR_FILES);
+	while ( NEXT )
+	{
+		if (FILENAME != "")
+		{
+			wxFileName fname( FILENAME );
+			TREE_ID_FILES_ITEM[i] = OBJ_TREE_FILES_LIST->AppendItem(TREE_ID_FILES_ROOT, 
+			fname.GetName() + wxT(" . مكتبة"), 3, 3);
+			TREE_FILES_TYPE[i] = "ALIFLIB";
 			TREE_FILES_PATH[i] = PATH_DIRECTORY + FILENAME;
 			TREE_FILES_TOTAL_ITEM++;
 			i++;
@@ -6066,7 +6233,7 @@ void UI_MANAGER(unsigned int ID_FILE)
 	}
 	else if (EXTENSION == "ALIFC")
 	{
-		// Alif Library
+		// Alif C++
 
 		obj_CODE->SetLayoutDirection (wxLayout_LeftToRight);
 
@@ -6075,6 +6242,28 @@ void UI_MANAGER(unsigned int ID_FILE)
 		// UI Initilizing
 		UI_BUTTON_SAVE(true);
 		UI_BUTTON_BUILD(true);
+		#ifdef AlifStudio_DisableSTC
+			obj_CODE->Clear();
+		#else
+			obj_CODE->ClearAll();
+		#endif
+		obj_CODE->Enable(true);
+		obj_CODE->SetEditable(true);
+
+		obj_CODE->LoadFile(TREE_FILES_PATH[ID_FILE]);
+
+		// Hide Aui Designer Panels / UI Web
+		UI_DesignerShow(false, false);
+	}
+	else if (EXTENSION == "ALIFLIB")
+	{
+		// Alif Library
+
+		obj_CODE->SetLayoutDirection (wxLayout_RightToLeft);
+
+		// UI Initilizing
+		UI_BUTTON_SAVE(true);
+		UI_BUTTON_BUILD(false);
 		#ifdef AlifStudio_DisableSTC
 			obj_CODE->Clear();
 		#else
